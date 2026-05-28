@@ -6,6 +6,9 @@
 #include "game.h"
 #include "verlet.h"
 
+#define SLIVER FxFrom(1)
+#define MAX_HOOK_DISTANCE FxFrom(314)
+
 typedef struct {
     VerletBody *segs, *end;
     Vec2 anchor;
@@ -65,29 +68,30 @@ void restart() {
     }
 }
 
-static const Fixed sliver = FxFrom(1);
-
 static void maybe_manifest_rope() {
     if (!is_pressed() && monke.rope.segs) {
         nuke_rope(&monke.rope);
         return;
     }
 
-    if (!is_pressed() || monke.rope.segs)
+    if (!is_pressed() || monke.rope.segs || !TinyDLength(anchors))
         return;
 
     size_t closest = 0;
 
     for (size_t i = 1; i < TinyDLength(anchors); i++)
-        if (anchors[i].pos.x < anchors[closest].pos.x)
+        if (Vdist(monke.body.pos, anchors[i].pos) <= Vdist(monke.body.pos, anchors[closest].pos))
             closest = i;
+
+    if (Vdist(monke.body.pos, anchors[closest].pos) > MAX_HOOK_DISTANCE)
+        return;
 
     monke.rope.segs = MakeTinyD(VerletBody);
     monke.rope.anchor = anchors[closest].pos;
     monke.rope.end = &monke.body;
 
     const Vec2 dir = Vsub(anchors[closest].pos, monke.body.pos);
-    const size_t segs = FxToInt(Fdiv(Fabs(dir.x), sliver));
+    const size_t segs = FxToInt(Fdiv(Fabs(dir.x), SLIVER));
 
     for (size_t i = 0; i <= segs; i++) {
         const Vec2 pos = Vscale(dir, FxFrom((double)i / (double)segs));
@@ -114,7 +118,7 @@ static void constrain_rope(Rope* rope) {
         if (dist == Fx0)
             continue;
 
-        const Fixed diff = Fdiv(Fsub(Fhalf(sliver), dist), dist);
+        const Fixed diff = Fdiv(Fsub(SLIVER, dist), dist);
         const Vec2 bounce = Vscale(Vsub(a->pos, b->pos), Fhalf(diff));
 
         a->pos = Vadd(a->pos, bounce);

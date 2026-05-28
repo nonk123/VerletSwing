@@ -19,7 +19,7 @@ Vec2 Vscale(Vec2 a, Fixed s) {
 }
 
 Fixed Vlen(Vec2 v) {
-    return Fsqrt(v.x * v.x + v.y * v.y);
+    return Fsqrt(Fadd(Fmul(v.x, v.x), Fmul(v.y, v.y)));
 }
 
 Fixed Vdist(Vec2 a, Vec2 b) {
