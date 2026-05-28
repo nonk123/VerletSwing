@@ -17,3 +17,11 @@ Vec2 Vscale(Vec2 a, Fixed s) {
     a.y = Fmul(a.y, s);
     return a;
 }
+
+Fixed Vlen(Vec2 v) {
+    return Fsqrt(v.x * v.x + v.y * v.y);
+}
+
+Fixed Vdist(Vec2 a, Vec2 b) {
+    return Vlen(Vsub(b, a));
+}

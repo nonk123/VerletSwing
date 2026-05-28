@@ -49,6 +49,10 @@ SDL_AppResult SDL_AppInit(void** ctx, int argc, char* argv[]) {
     return SDL_APP_CONTINUE;
 }
 
+bool is_pressed() {
+    return SDL_GetKeyboardState(NULL)[SDL_SCANCODE_SPACE] || (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LMASK);
+}
+
 SDL_AppResult SDL_AppEvent(void* ctx, SDL_Event* event) {
     (void)ctx;
 
@@ -91,7 +95,7 @@ SDL_AppResult SDL_AppIterate(void* ctx) {
 
     then = now;
 
-    for (; ticks > 0; ticks -= 1.0)
+    for (; ticks >= 1.0; ticks -= 1.0)
         update();
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
