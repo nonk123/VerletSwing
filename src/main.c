@@ -59,6 +59,10 @@ SDL_AppResult SDL_AppEvent(void* ctx, SDL_Event* event) {
     case SDL_EVENT_KEY_DOWN:
         if (event->key.key == SDLK_ESCAPE)
             return SDL_APP_SUCCESS;
+
+        if (event->key.key == SDLK_R)
+            restart();
+
         break;
 
     default:
@@ -68,21 +72,27 @@ SDL_AppResult SDL_AppEvent(void* ctx, SDL_Event* event) {
     return SDL_APP_CONTINUE;
 }
 
-static uint64_t delta_ns = 0;
+#define TICKRATE (60)
 
 Fixed timestep() {
-    const Fixed max = FxDiv(Fx1, FxFrom(60));
-    return FxMin(max, FxFrom((double)delta_ns / 1000000000.0));
+    return Fdiv(Fx1, FxFrom(TICKRATE));
 }
 
 SDL_AppResult SDL_AppIterate(void* ctx) {
     (void)ctx;
 
     static uint64_t then = 0;
-    const uint64_t now = SDL_GetTicksNS();
-    delta_ns = now - then, then = now;
+    static double ticks = 0.0;
 
-    update();
+    const uint64_t now = SDL_GetTicksNS();
+
+    if (then)
+        ticks += (double)(now - then) * (double)TICKRATE / 1000000000.0;
+
+    then = now;
+
+    for (; ticks > 0; ticks -= 1.0)
+        update();
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(renderer);

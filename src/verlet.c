@@ -1,6 +1,6 @@
 #include "verlet.h"
 
-static const Vec2 gravity = {.x = Fx0, .y = FxFrom(320)};
+static const Vec2 gravity = {.x = Fx0, .y = FxFrom(512)};
 
 void verlet(VerletBody* this) {
     Vec2 sumoffucks = {Fx0, Fx0};
