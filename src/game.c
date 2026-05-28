@@ -87,20 +87,16 @@ static void maybe_manifest_rope() {
     monke.rope.end = &monke.body;
 
     const Vec2 dir = Vsub(anchors[closest].pos, monke.body.pos);
-
-    const size_t segs = FxToInt(Fabs(Fdiv(dir.x, sliver)));
-    Fixed x = monke.body.pos.x;
+    const size_t segs = FxToInt(Fdiv(Fabs(dir.x), sliver));
 
     for (size_t i = 0; i <= segs; i++) {
-        Fixed y = Fmul(dir.y, FxFrom((double)i / (double)segs));
-        y = Fadd(y, monke.body.pos.y);
+        const Vec2 pos = Vscale(dir, FxFrom((double)i / (double)segs));
 
         VerletBody seg = {0};
-        init_verlet(&seg, XY(x, y));
+        init_verlet(&seg, Vadd(pos, monke.body.pos));
         seg.f_gravity = i < segs;
 
         monke.rope.segs = TinyDAppend(monke.rope.segs, seg);
-        x = Fadd(x, sliver);
     }
 }
 
