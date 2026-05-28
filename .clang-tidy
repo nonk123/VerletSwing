@@ -1,0 +1,12 @@
+Checks: |
+  clang-diagnostic-*,
+  clang-analyzer-*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  performance-*,
+  portability-*,
+  misc-*,
+  -misc-use-anonymous-namespace,
+  -misc-non-private-member-variables-in-classes,
+  -misc-use-internal-linkage,
+  cppcoreguidelines-init-variables

@@ -1,0 +1,118 @@
+#define SDL_MAIN_USE_CALLBACKS
+
+#include <SDL3/SDL_init.h>
+#include <SDL3/SDL_log.h>
+#include <SDL3/SDL_main.h>
+#include <SDL3/SDL_render.h>
+#include <SDL3/SDL_stdinc.h>
+#include <SDL3/SDL_timer.h>
+#include <SDL3/SDL_video.h>
+
+#define S_TRUCTURES_IMPLEMENTATION
+#include <S_tructures.h>
+
+#define FIX_IMPLEMENTATION
+#include <S_fixed.h>
+
+#include "cmake.h"
+#include "monke.h"
+
+SDL_Window* window = NULL;
+SDL_Renderer* renderer = NULL;
+
+static Monke monke = {0};
+
+static SDL_AppResult SDL_Fail() {
+    SDL_LogError(SDL_LOG_CATEGORY_CUSTOM, "%s", SDL_GetError());
+    return SDL_APP_FAILURE;
+}
+
+SDL_AppResult SDL_AppInit(void** ctx, int argc, char* argv[]) {
+    (void)ctx, (void)argc, (void)argv;
+
+    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
+        return SDL_Fail();
+
+    window = SDL_CreateWindow(GAME_NAME, 800, 600, SDL_WINDOW_RESIZABLE);
+
+    if (!window)
+        return SDL_Fail();
+
+    renderer = SDL_CreateRenderer(window, NULL);
+
+    if (!renderer)
+        return SDL_Fail();
+
+    SDL_SetRenderVSync(renderer, SDL_RENDERER_VSYNC_ADAPTIVE);
+    SDL_ShowWindow(window);
+
+    init_monke(&monke);
+
+    return SDL_APP_CONTINUE;
+}
+
+SDL_AppResult SDL_AppEvent(void* ctx, SDL_Event* event) {
+    (void)ctx;
+
+    switch (event->type) {
+    case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
+        return SDL_APP_SUCCESS;
+
+    case SDL_EVENT_KEY_DOWN:
+        if (event->key.key == SDLK_ESCAPE)
+            return SDL_APP_SUCCESS;
+        break;
+
+    default:
+        break;
+    }
+
+    return SDL_APP_CONTINUE;
+}
+
+static uint64_t delta_ns = 0;
+
+Fixed timestep() {
+    const Fixed max = FxDiv(Fx1, FxFrom(60));
+    return FxMin(max, FxFrom((double)delta_ns / 1000000000.0));
+}
+
+SDL_AppResult SDL_AppIterate(void* ctx) {
+    (void)ctx;
+
+    static uint64_t then = 0;
+    const uint64_t now = SDL_GetTicksNS();
+    delta_ns = now - then, then = now;
+
+    verlet(&monke.body);
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(renderer);
+
+    const float w = 64.f, h = 64.f;
+    const SDL_FRect rect = {
+        .x = Fx2Float(monke.body.pos.x) - w / 2.f,
+        .y = Fx2Float(monke.body.pos.y) - h / 2.f,
+        .w = w / 2.f,
+        .h = h / 2.f,
+    };
+
+    SDL_SetRenderDrawColor(renderer, 255, 32, 32, SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer, &rect);
+
+    SDL_RenderPresent(renderer);
+
+    return SDL_APP_CONTINUE;
+}
+
+void SDL_AppQuit(void* ctx, SDL_AppResult result) {
+    (void)ctx, (void)result;
+
+    if (renderer)
+        SDL_DestroyRenderer(renderer);
+
+    if (window)
+        SDL_DestroyWindow(window);
+
+    SDL_Quit();
+}

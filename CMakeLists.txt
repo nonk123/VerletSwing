@@ -1,0 +1,73 @@
+cmake_minimum_required(VERSION 3.27.0 FATAL_ERROR)
+
+project(VerletSwing VERSION 0.1.0
+    LANGUAGES C)
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_C_EXTENSIONS ON)
+
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS ON)
+
+set(BUILD_SHARED_LIBS OFF)
+set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
+
+include(FetchContent)
+set(FETCHCONTENT_QUIET FALSE)
+
+set(SDL_SHARED OFF CACHE INTERNAL "")
+set(SDL_STATIC ON CACHE INTERNAL "")
+set(SDL_TEST_LIBRARY OFF CACHE INTERNAL "")
+set(SDL_RENDER ON CACHE INTERNAL "")
+set(SDL_GPU OFF CACHE INTERNAL "")
+set(SDL_AUDIO ON CACHE INTERNAL "")
+set(SDL_CAMERA OFF CACHE INTERNAL "")
+set(SDL_JOYSTICK OFF CACHE INTERNAL "")
+set(SDL_HAPTIC OFF CACHE INTERNAL "")
+
+if(NOT EMSCRIPTEN) # emscripten ships its own SDL3 apparently???
+    FetchContent_Declare(SDL3
+        GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+        GIT_TAG release-3.4.8
+        EXCLUDE_FROM_ALL)
+
+    FetchContent_MakeAvailable(SDL3)
+    list(APPEND LIBS SDL3::SDL3-static)
+endif()
+
+FetchContent_Declare(S_fixed
+    GIT_REPOSITORY https://github.com/Schwungus/S_fixed
+    GIT_TAG 759217fe14c9eded65ff65d1f6ac30bd8009d683
+    EXCLUDE_FROM_ALL)
+FetchContent_MakeAvailable(S_fixed)
+list(APPEND LIBS S_fixed)
+
+FetchContent_Declare(S_tructures
+    GIT_REPOSITORY https://github.com/Schwungus/S_tructures
+    GIT_TAG 184f9a611fa2e04770a84c45121c775169e69fc6
+    EXCLUDE_FROM_ALL)
+
+FetchContent_MakeAvailable(S_tructures)
+list(APPEND LIBS S_tructures)
+
+if(EMSCRIPTEN)
+    set(CMAKE_EXECUTABLE_SUFFIX ".html")
+endif()
+
+file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.c)
+file(GLOB_RECURSE HEADERS ${CMAKE_SOURCE_DIR}/src/*.h)
+
+set(CONFIGURE_FILE ${CMAKE_BINARY_DIR}/generated/cmake.h)
+configure_file(${CMAKE_SOURCE_DIR}/src/cmake.h.in ${CONFIGURE_FILE} @ONLY)
+list(APPEND HEADERS ${CONFIGURE_FILE})
+
+add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS})
+target_include_directories(${PROJECT_NAME}
+    PRIVATE ${CMAKE_SOURCE_DIR}/include ${CMAKE_BINARY_DIR}/generated)
+target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
+
+if(EMSCRIPTEN)
+    target_link_options(${PROJECT_NAME} PRIVATE -sUSE_SDL=3)
+endif()
