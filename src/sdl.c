@@ -87,7 +87,7 @@ SDL_AppResult SDL_AppIterate(void* ctx) {
     const uint64_t now = SDL_GetTicksNS();
 
     if (then)
-        ticks += (double)(now - then) * (double)TICKRATE / 1000000000.0;
+        ticks += (double)(now - then) / (1000000000.0 / TICKRATE);
 
     then = now;
 
