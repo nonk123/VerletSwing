@@ -15,12 +15,10 @@
 #include <S_fixed.h>
 
 #include "cmake.h"
-#include "monke.h"
+#include "game.h"
 
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
-
-static Monke monke = {0};
 
 static SDL_AppResult SDL_Fail() {
     SDL_LogError(SDL_LOG_CATEGORY_CUSTOM, "%s", SDL_GetError());
@@ -46,7 +44,7 @@ SDL_AppResult SDL_AppInit(void** ctx, int argc, char* argv[]) {
     SDL_SetRenderVSync(renderer, SDL_RENDERER_VSYNC_ADAPTIVE);
     SDL_ShowWindow(window);
 
-    init_monke(&monke);
+    restart();
 
     return SDL_APP_CONTINUE;
 }
@@ -84,21 +82,12 @@ SDL_AppResult SDL_AppIterate(void* ctx) {
     const uint64_t now = SDL_GetTicksNS();
     delta_ns = now - then, then = now;
 
-    verlet(&monke.body);
+    update();
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(renderer);
 
-    const float w = 64.f, h = 64.f;
-    const SDL_FRect rect = {
-        .x = Fx2Float(monke.body.pos.x) - w / 2.f,
-        .y = Fx2Float(monke.body.pos.y) - h / 2.f,
-        .w = w / 2.f,
-        .h = h / 2.f,
-    };
-
-    SDL_SetRenderDrawColor(renderer, 255, 32, 32, SDL_ALPHA_OPAQUE);
-    SDL_RenderFillRect(renderer, &rect);
+    draw();
 
     SDL_RenderPresent(renderer);
 
