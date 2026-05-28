@@ -23,6 +23,7 @@ static void init_monke(Monke* this) {
 
 void restart() {
     init_monke(&monke);
+    monke.body.f_gravity = true;
 }
 
 void update() {
