@@ -147,8 +147,8 @@ static void fill_square(Vec2 pos, float radius, SDL_Color color) {
     const SDL_FRect rect = {
         .x = Fx2Float(pos.x) - radius,
         .y = Fx2Float(pos.y) - radius,
-        .w = radius,
-        .h = radius,
+        .w = radius * 2.f,
+        .h = radius * 2.f,
     };
 
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
@@ -164,8 +164,8 @@ static void draw_rope(Rope rope) {
 
 void draw() {
     for (size_t i = 0; i < TinyDLength(anchors); i++)
-        fill_square(anchors[i].pos, 32.f, RGB(127, 127, 0));
+        fill_square(anchors[i].pos, 16.f, RGB(127, 127, 0));
 
     draw_rope(monke.rope);
-    fill_square(monke.body.pos, 32.f, RGB(255, 0, 0));
+    fill_square(monke.body.pos, 16.f, RGB(255, 0, 0));
 }
