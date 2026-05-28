@@ -88,12 +88,12 @@ static void maybe_manifest_rope() {
 
     const Vec2 dir = Vsub(anchors[closest].pos, monke.body.pos);
 
-    const size_t segs = FxToInt(Fdiv(dir.x, sliver)) + 1;
+    const size_t segs = FxToInt(Fabs(Fdiv(dir.x, sliver)));
     Fixed x = monke.body.pos.x;
 
-    for (size_t i = 0; i < segs; i++) {
+    for (size_t i = 0; i <= segs; i++) {
         Fixed y = Fmul(dir.y, FxFrom((double)i / (double)segs));
-        y = Fadd(monke.body.pos.y, y);
+        y = Fadd(y, monke.body.pos.y);
 
         VerletBody seg = {0};
         init_verlet(&seg, XY(x, y));
