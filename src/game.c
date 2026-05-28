@@ -57,14 +57,10 @@ void restart() {
     anchors = MakeTinyD(Anchor);
 
     const Fixed step = FxFrom(512);
-    Fixed x = Fx0;
 
     for (int i = 0; i < 10; i++) {
-        x = Fadd(x, step);
-        const Fixed y = FxFrom(h / 4) + FxFrom(SDL_rand(h / 2));
-
-        Anchor anch = {x, y};
-        anchors = TinyDAppend(anchors, anch);
+        const Fixed x = Fmul(step, FxFrom(i)), y = FxFrom(h / 4) + FxFrom(SDL_rand(h / 2));
+        anchors = TinyDAppendPro(anchors, &(Anchor){x, y});
     }
 }
 
