@@ -25,7 +25,7 @@ static Anchor* anchors = NULL;
 
 static void nuke_rope(Rope* this) {
     FreeTinyD(this->segs);
-    this->segs = NULL;
+    this->end = this->segs = NULL;
 }
 
 static void init_monke(Monke* this) {
