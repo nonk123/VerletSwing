@@ -37,13 +37,6 @@ if(NOT EMSCRIPTEN) # emscripten ships its own SDL3 apparently???
     list(APPEND LIBS SDL3::SDL3-static)
 endif()
 
-FetchContent_Declare(S_fixed
-    GIT_REPOSITORY https://github.com/Schwungus/S_fixed
-    GIT_TAG 759217fe14c9eded65ff65d1f6ac30bd8009d683
-    EXCLUDE_FROM_ALL)
-FetchContent_MakeAvailable(S_fixed)
-list(APPEND LIBS S_fixed)
-
 FetchContent_Declare(S_tructures
     GIT_REPOSITORY https://github.com/Schwungus/S_tructures
     GIT_TAG 184f9a611fa2e04770a84c45121c775169e69fc6

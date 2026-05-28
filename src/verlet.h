@@ -1,8 +1,10 @@
 #pragma once
 
+#include <SDL3/SDL_stdinc.h>
+
 #include "vec2.h"
 
-Fixed timestep();
+double timestep();
 
 typedef struct {
     Vec2 pos, old_pos;

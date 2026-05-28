@@ -1,14 +1,12 @@
 #pragma once
 
-#include <S_fixed.h>
-
 typedef struct {
-    Fixed x, y;
+    double x, y;
 } Vec2;
 
 #define XY(_x, _y) ((Vec2){.x = (_x), .y = (_y)})
 
 Vec2 Vadd(Vec2, Vec2), Vsub(Vec2, Vec2);
-Vec2 Vscale(Vec2, Fixed);
+Vec2 Vscale(Vec2, double);
 
-Fixed Vlen(Vec2), Vdist(Vec2, Vec2);
+double Vlen(Vec2), Vdist(Vec2, Vec2);

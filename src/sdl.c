@@ -10,9 +10,6 @@
 #define S_TRUCTURES_IMPLEMENTATION
 #include <S_tructures.h>
 
-#define FIX_IMPLEMENTATION
-#include <S_fixed.h>
-
 #include "cmake.h"
 #include "game.h"
 
@@ -77,8 +74,8 @@ SDL_AppResult SDL_AppEvent(void* ctx, SDL_Event* event) {
 
 #define TICKRATE (60)
 
-Fixed timestep() {
-    return Fdiv(Fx1, FxFrom(TICKRATE));
+double timestep() {
+    return 1.0 / TICKRATE;
 }
 
 SDL_AppResult SDL_AppIterate(void* ctx) {

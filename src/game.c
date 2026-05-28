@@ -6,12 +6,12 @@
 #include "game.h"
 #include "verlet.h"
 
-#define SLIVER FxFrom(1)
-#define MAX_HOOK_DISTANCE FxFrom(314)
+#define SLIVER 4.0
+#define MAX_HOOK_DISTANCE 224.0
 
 typedef struct {
-    VerletBody *segs, *end;
-    Vec2 anchor;
+    VerletBody *segs, *start;
+    Vec2 end;
 } Rope;
 
 typedef struct {
@@ -28,7 +28,7 @@ static Anchor* anchors = NULL;
 
 static void nuke_rope(Rope* this) {
     FreeTinyD(this->segs);
-    this->end = this->segs = NULL;
+    this->start = this->segs = NULL;
 }
 
 static void init_monke(Monke* this) {
@@ -37,8 +37,7 @@ static void init_monke(Monke* this) {
     extern SDL_Window* window;
     SDL_GetWindowSize(window, &w, NULL);
 
-    Vec2 pos = {FxFrom(w), Fx0};
-    pos = Vscale(pos, FxFrom(0.5));
+    Vec2 pos = Vscale(XY(w, 0.0), 0.5);
     init_verlet(&this->body, pos);
 
     nuke_rope(&monke.rope);
@@ -56,10 +55,10 @@ void restart() {
     FreeTinyD(anchors);
     anchors = MakeTinyD(Anchor);
 
-    const Fixed step = FxFrom(512);
+    const double step = 512.f;
 
     for (int i = 0; i < 10; i++) {
-        const Fixed x = Fmul(step, FxFrom(i)), y = FxFrom(h / 4) + FxFrom(SDL_rand(h / 2));
+        const double x = step * i, y = h / 4 + SDL_rand(h / 2);
         anchors = TinyDAppendPro(anchors, &(Anchor){x, y});
     }
 }
@@ -83,42 +82,40 @@ static void maybe_manifest_rope() {
         return;
 
     monke.rope.segs = MakeTinyD(VerletBody);
-    monke.rope.anchor = anchors[closest].pos;
-    monke.rope.end = &monke.body;
+    monke.rope.end = anchors[closest].pos;
+    monke.rope.start = &monke.body;
 
     const Vec2 dir = Vsub(anchors[closest].pos, monke.body.pos);
-    const size_t segs = FxToInt(Fdiv(Fabs(dir.x), SLIVER));
+    const size_t segs = (size_t)(SDL_fabs(dir.x) / SLIVER);
 
-    for (size_t i = 0; i <= segs; i++) {
-        const Vec2 pos = Vscale(dir, FxFrom((double)i / (double)segs));
+    for (size_t i = 0; i < segs; i++) {
+        const Vec2 pos = Vscale(dir, (double)i / (double)segs);
 
         VerletBody seg = {0};
         init_verlet(&seg, Vadd(pos, monke.body.pos));
-        seg.f_gravity = i < segs;
+        seg.f_gravity = true;
 
-        monke.rope.segs = TinyDAppend(monke.rope.segs, seg);
+        monke.rope.segs = TinyDAppendPro(monke.rope.segs, &seg);
     }
 }
 
 static void constrain_rope(Rope* rope) {
-    for (int i = (int)TinyDLength(rope->segs) - 2; i >= -1; i--) {
-        VerletBody* const a = i < 0 ? rope->end : &rope->segs[i];
-        VerletBody* const b = &rope->segs[i + 1];
+    for (int i = (int)TinyDLength(rope->segs) - 1; i >= 0; i--) {
+        VerletBody* const a = i ? &rope->segs[i - 1] : rope->start;
+        VerletBody* const b = &rope->segs[i];
 
-        if (i == TinyDLength(monke.rope.segs) - 2)
-            b->pos = rope->anchor; // !! IMPORTANT
+        if (i == TinyDLength(rope->segs) - 1)
+            b->pos = rope->end; // !! IMPORTANT
         // rope doesn't rope ^ without this
 
-        const Fixed dist = Vdist(a->pos, b->pos);
+        const double dist = Vdist(a->pos, b->pos);
 
-        if (dist == Fx0)
+        if (dist <= 1e-4)
             continue;
 
-        const Fixed diff = Fdiv(Fsub(SLIVER, dist), dist);
-        const Vec2 bounce = Vscale(Vsub(a->pos, b->pos), Fhalf(diff));
-
-        a->pos = Vadd(a->pos, bounce);
-        b->pos = Vsub(b->pos, bounce);
+        const double diff = (SLIVER - dist) / dist;
+        const Vec2 bounce = Vscale(Vsub(a->pos, b->pos), 0.5 * diff);
+        a->pos = Vadd(a->pos, bounce), b->pos = Vsub(b->pos, bounce);
     }
 }
 
@@ -141,8 +138,8 @@ static void fill_square(Vec2 pos, float radius, SDL_Color color) {
     extern SDL_Renderer* renderer;
 
     const SDL_FRect rect = {
-        .x = Fx2Float(pos.x) - radius,
-        .y = Fx2Float(pos.y) - radius,
+        .x = (float)pos.x - radius,
+        .y = (float)pos.y - radius,
         .w = radius * 2.f,
         .h = radius * 2.f,
     };
