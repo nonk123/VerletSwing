@@ -41,7 +41,7 @@ endif()
 
 FetchContent_Declare(S_tructures
     GIT_REPOSITORY https://github.com/Schwungus/S_tructures
-    GIT_TAG 184f9a611fa2e04770a84c45121c775169e69fc6
+    GIT_TAG b867668c4b991bb2482d34a98416a3a106447544
     EXCLUDE_FROM_ALL)
 
 FetchContent_MakeAvailable(S_tructures)
