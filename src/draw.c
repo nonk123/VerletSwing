@@ -1,7 +1,6 @@
 #include <SDL3/SDL_render.h>
 
 #include "draw.h"
-#include "fs.h"
 #include "vec2.h"
 
 #define FONT_WIDTH 96

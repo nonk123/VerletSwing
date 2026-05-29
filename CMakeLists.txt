@@ -47,8 +47,6 @@ list(APPEND LIBS S_tructures)
 
 if(EMSCRIPTEN)
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
-else()
-    set(DEBUG_ASSETS_DIR ${CMAKE_SOURCE_DIR}/assets)
 endif()
 
 file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.c)
@@ -62,6 +60,12 @@ add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS})
 target_include_directories(${PROJECT_NAME}
     PRIVATE ${CMAKE_SOURCE_DIR}/include ${CMAKE_BINARY_DIR}/generated)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
+
+set(DEBUG $<CONFIG:Debug>)
+set(DESKTOP $<NOT:$<BOOL:${EMSCRIPTEN}>>)
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+    ASSETS=$<IF:$<AND:${DEBUG},${DESKTOP}>,"${CMAKE_SOURCE_DIR}/assets/","assets/">)
 
 if(EMSCRIPTEN)
     target_link_options(${PROJECT_NAME} PRIVATE --preload-file ${CMAKE_SOURCE_DIR}/assets@assets)
