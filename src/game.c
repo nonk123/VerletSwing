@@ -233,14 +233,14 @@ void draw(double dt) {
 
     fill_square(monke.body.pos, 16.0, RGB(255, 0, 0));
 
-    const double fs = 50.0;
+    const double fs = 50.0, pad = 8.0;
 
     if (death_timer > 0.0) {
         const char* txt = "DEATH IMMINENT";
-        draw_text(XY(0.5 * (w_width() - text_width(fs, txt)), w_height() - fs), fs, txt);
+        draw_text(XY(0.5 * (w_width() - text_width(fs, txt)), w_height() - fs - pad), fs, txt);
     }
 
     static char buf[128] = {0};
     SDL_snprintf(buf, sizeof(buf), "A%zu", TinyDLength(anchors));
-    draw_text(XY(w_width() - text_width(fs, buf), 0.0), fs, buf);
+    draw_text(XY(w_width() - text_width(fs, buf) - pad, 0.0), fs, buf);
 }
