@@ -42,7 +42,7 @@ jobs:
         uses: chetan/git-restore-mtime-action@v2
 
       - name: Install Emscripten SDK
-        uses: emscripten-core/setup-emsdk@v15
+        uses: emscripten-core/setup-emsdk@v16
 
       - name: Install dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest
