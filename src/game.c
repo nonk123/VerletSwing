@@ -1,3 +1,5 @@
+#include <SDL3/SDL_time.h>
+
 #include <S_tructures.h>
 
 #include "draw.h"
@@ -28,6 +30,7 @@ typedef struct {
 static Monke monke = {0};
 static Anchor* anchors = NULL;
 
+static uint64_t anchor_seed = 0;
 static double death_timer = 0.0;
 
 static void nuke_rope(Rope* this) {
@@ -41,21 +44,66 @@ static void init_monke(Monke* this) {
     nuke_rope(&monke.rope);
 }
 
+static void place_anchor(const double x) {
+    const double y = w_height() / 4 + SDL_rand(w_height() / 2);
+    anchors = TinyDAppendPro(anchors, &(Anchor){x, y});
+}
+
+#define ANCHOR_STEP (0.7 * MAX_HOOK_DISTANCE)
+
+static double step() {
+    return ANCHOR_STEP * (0.5 + SDL_randf());
+}
+
+static void generate_anchors() {
+    const double center = monke.body.pos.x, radius = 2.0 * w_width();
+
+    if (!TinyDLength(anchors))
+        place_anchor(center + ANCHOR_STEP);
+
+    for (size_t i = 0; i < TinyDLength(anchors);) {
+        const double cur = anchors[i].pos.x;
+
+        if (cur < center - 2.0 * radius || cur > center + 2.0 * radius)
+            anchors = TinyDErase(anchors, i);
+        else
+            i += 1;
+    }
+
+    double min = anchors[0].pos.x, max = min;
+
+    for (size_t i = 1; i < TinyDLength(anchors); i++) {
+        const double cur = anchors[i].pos.x;
+
+        if (cur < min)
+            min = cur;
+
+        if (cur > max)
+            max = cur;
+    }
+
+    while (min > center - radius) {
+        min -= step();
+        place_anchor(min);
+    }
+
+    while (max < center + radius) {
+        max += step();
+        place_anchor(max);
+    }
+}
+
 void restart() {
+    SDL_GetCurrentTime((SDL_Time*)&anchor_seed);
+    SDL_srand(anchor_seed);
+
     init_monke(&monke);
     monke.body.f_gravity = true;
 
     FreeTinyD(anchors);
     anchors = MakeTinyD(Anchor);
 
-    const double step = 0.7 * MAX_HOOK_DISTANCE;
-    double x = monke.body.pos.x + step;
-
-    for (int i = 0; i < 10; i++) {
-        const double y = w_height() / 4 + SDL_rand(w_height() / 2);
-        anchors = TinyDAppendPro(anchors, &(Anchor){x, y});
-        x += step * (0.5 + SDL_randf());
-    }
+    generate_anchors();
 }
 
 static int closest_anchor() {
@@ -150,6 +198,7 @@ static void verlet_rope(Rope* rope) {
 }
 
 void update() {
+    generate_anchors();
     maybe_manifest_rope();
 
     verlet(&monke.body);
@@ -184,9 +233,14 @@ void draw(double dt) {
 
     fill_square(monke.body.pos, 16.0, RGB(255, 0, 0));
 
+    const double fs = 50.0;
+
     if (death_timer > 0.0) {
         const char* txt = "DEATH IMMINENT";
-        const double fs = 50.0;
         draw_text(XY(0.5 * (w_width() - text_width(fs, txt)), w_height() - fs), fs, txt);
     }
+
+    static char buf[128] = {0};
+    SDL_snprintf(buf, sizeof(buf), "A%zu", TinyDLength(anchors));
+    draw_text(XY(w_width() - text_width(fs, buf), 0.0), fs, buf);
 }

@@ -25,7 +25,7 @@ void set_camera_target(Vec2 value) {
 void update_camera(double dt) {
     const Vec2 dir = Vnorm(Vsub(cam_target, cam_offset));
     const double dist = Vlen(Vsub(cam_target, cam_offset));
-    const double vel = SDL_min(cam_speed * dt, dist);
+    const double vel = dist > cam_speed ? dist - cam_speed : SDL_min(cam_speed * dt, dist);
     cam_offset = Vadd(cam_offset, Vscale(dir, vel));
 }
 
