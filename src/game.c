@@ -64,6 +64,22 @@ void restart() {
     }
 }
 
+static int closest_anchor() {
+    if (!TinyDLength(anchors))
+        return -1;
+
+    int closest = 0;
+
+    for (int i = 1; i < TinyDLength(anchors); i++)
+        if (Vdist(monke.body.pos, anchors[i].pos) <= Vdist(monke.body.pos, anchors[closest].pos))
+            closest = i;
+
+    if (Vdist(monke.body.pos, anchors[closest].pos) > MAX_HOOK_DISTANCE)
+        return -1;
+
+    return closest;
+}
+
 static void maybe_manifest_rope() {
     if (!is_pressed()) {
         if (monke.rope.segs)
@@ -71,16 +87,12 @@ static void maybe_manifest_rope() {
         nuke_rope(&monke.rope);
     }
 
-    if (!is_pressed() || monke.rope.segs || !TinyDLength(anchors))
+    if (!is_pressed() || monke.rope.segs)
         return;
 
-    size_t closest = 0;
+    const int closest = closest_anchor();
 
-    for (size_t i = 1; i < TinyDLength(anchors); i++)
-        if (Vdist(monke.body.pos, anchors[i].pos) <= Vdist(monke.body.pos, anchors[closest].pos))
-            closest = i;
-
-    if (Vdist(monke.body.pos, anchors[closest].pos) > MAX_HOOK_DISTANCE)
+    if (closest < 0)
         return;
 
     const Vec2 dir = Vsub(anchors[closest].pos, monke.body.pos);
@@ -162,9 +174,14 @@ static void draw_rope(Rope rope) {
 }
 
 void draw() {
-    for (size_t i = 0; i < TinyDLength(anchors); i++)
-        fill_square(anchors[i].pos, 16.f, RGB(127, 127, 0));
-
     draw_rope(monke.rope);
+
+    const int closest = closest_anchor();
+
+    for (int i = 0; i < TinyDLength(anchors); i++) {
+        const SDL_Color col = i == closest ? RGB(255, 255, 0) : RGB(127, 127, 0);
+        fill_square(anchors[i].pos, 16.f, col);
+    }
+
     fill_square(monke.body.pos, 16.f, RGB(255, 0, 0));
 }
