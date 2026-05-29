@@ -1,0 +1,93 @@
+name: Upload to GitHub Pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - .github/workflows/release.yml
+      - CMakeLists.txt
+      - src/**
+      - assets/**
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: Build & upload
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.publish.outputs.page_url }}
+
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+
+    env:
+      CACHE_BUST: 0
+
+      BUILDDIR: build
+      OUTDIR: dist
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Restore source timestamps for crazy CMake caching benefits
+        uses: chetan/git-restore-mtime-action@v2
+
+      - name: Install Emscripten SDK
+        uses: emscripten-core/setup-emsdk@v15
+
+      - name: Install dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          version: 1.0
+          packages: >-
+            cmake ninja-build
+            libasound2-dev libpulse-dev libaudio-dev libfribidi-dev libjack-dev
+            libsndio-dev libx11-dev libxext-dev libxrandr-dev libxcursor-dev
+            libxfixes-dev libxi-dev libxss-dev libxtst-dev libxkbcommon-dev libdrm-dev
+            libgbm-dev libgl1-mesa-dev libgles2-mesa-dev libegl1-mesa-dev libdbus-1-dev
+            libibus-1.0-dev libudev-dev libthai-dev libpipewire-0.3-dev libwayland-dev
+            libdecor-0-dev liburing-dev
+
+      - name: Cache build dir
+        id: cache-build
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.BUILDDIR }}
+          key: ${{ env.CACHE_BUST }}-${{ github.ref_name }}-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            ${{ env.CACHE_BUST }}-${{ github.ref_name }}-
+            ${{ env.CACHE_BUST }}-
+
+      - name: Configure
+        run: |
+          emcmake cmake -G Ninja -S . -B ${{ env.BUILDDIR }} -D CMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: |
+          cmake --build ${{ env.BUILDDIR }} --target all
+
+          rm -rf ${{ env.OUTDIR }}; mkdir -p ${{ env.OUTDIR }}
+          cp ${{ env.BUILDDIR }}/VerletSwing.{js,wasm,data} ${{ env.OUTDIR }}
+          cp ${{ env.BUILDDIR }}/VerletSwing.html ${{ env.OUTDIR }}/index.html
+        # TODO: maybe use a custom ^ harness?
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: ${{ env.OUTDIR }}
+
+      - name: Publish to GitHub Pages
+        id: publish
+        uses: actions/deploy-pages@v5
