@@ -7,7 +7,6 @@
 #define RGB(_r, _g, _b) ((SDL_Color){.r = (_r), .g = (_g), .b = (_b), .a = SDL_ALPHA_OPAQUE})
 
 bool sdl_load_font();
-int windwidth(), windheight();
 
 Vec2 camera_pos();
 void set_camera_target(Vec2);

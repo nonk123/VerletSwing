@@ -13,6 +13,7 @@
 #include "cmake.h"
 #include "draw.h"
 #include "game.h"
+#include "sdl.h"
 
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
@@ -44,6 +45,23 @@ SDL_AppResult SDL_AppInit(void** ctx, int argc, char* argv[]) {
 
 bool is_pressed() {
     return SDL_GetKeyboardState(NULL)[SDL_SCANCODE_SPACE] || (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LMASK);
+}
+
+Vec2 mouse_pos_v() {
+    Vec2 result = {0.0, 0.0};
+    mouse_pos(&result.x, &result.y);
+    return result;
+}
+
+void mouse_pos(double* x, double* y) {
+    float fx = 0.f, fy = 0.f;
+    SDL_GetMouseState(&fx, &fy);
+
+    if (x)
+        *x = fx;
+
+    if (y)
+        *y = fy;
 }
 
 SDL_AppResult SDL_AppEvent(void* ctx, SDL_Event* event) {
@@ -114,13 +132,13 @@ void SDL_AppQuit(void* ctx, SDL_AppResult result) {
     SDL_Quit();
 }
 
-int windwidth() {
+int w_width() {
     int w = 0;
     SDL_GetWindowSize(window, &w, NULL);
     return w;
 }
 
-int windheight() {
+int w_height() {
     int h = 0;
     SDL_GetWindowSize(window, NULL, &h);
     return h;

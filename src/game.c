@@ -2,6 +2,7 @@
 
 #include "draw.h"
 #include "game.h"
+#include "sdl.h"
 #include "verlet.h"
 
 #define SLIVER (4.0)
@@ -35,7 +36,7 @@ static void nuke_rope(Rope* this) {
 }
 
 static void init_monke(Monke* this) {
-    Vec2 pos = Vscale(XY(windwidth(), 0.0), 0.5);
+    Vec2 pos = Vscale(XY(w_width(), 0.0), 0.5);
     init_verlet(&this->body, pos);
     nuke_rope(&monke.rope);
 }
@@ -51,7 +52,7 @@ void restart() {
     double x = monke.body.pos.x + step;
 
     for (int i = 0; i < 10; i++) {
-        const double y = windheight() / 4 + SDL_rand(windheight() / 2);
+        const double y = w_height() / 4 + SDL_rand(w_height() / 2);
         anchors = TinyDAppendPro(anchors, &(Anchor){x, y});
         x += step * (0.5 + SDL_randf());
     }
@@ -62,15 +63,25 @@ static int closest_anchor() {
         return -1;
 
     int closest = 0;
+    Vec2 cursor = Vadd(mouse_pos_v(), camera_pos());
+
+    for (int i = 1; i < TinyDLength(anchors); i++)
+        if (Vdist(cursor, anchors[i].pos) <= Vdist(cursor, anchors[closest].pos))
+            closest = i;
+
+    if (Vdist(monke.body.pos, anchors[closest].pos) <= MAX_HOOK_DISTANCE)
+        return closest;
+
+    closest = 0;
 
     for (int i = 1; i < TinyDLength(anchors); i++)
         if (Vdist(monke.body.pos, anchors[i].pos) <= Vdist(monke.body.pos, anchors[closest].pos))
             closest = i;
 
-    if (Vdist(monke.body.pos, anchors[closest].pos) > MAX_HOOK_DISTANCE)
-        return -1;
+    if (Vdist(monke.body.pos, anchors[closest].pos) <= MAX_HOOK_DISTANCE)
+        return closest;
 
-    return closest;
+    return -1;
 }
 
 static void maybe_manifest_rope() {
@@ -144,7 +155,7 @@ void update() {
     verlet(&monke.body);
     verlet_rope(&monke.rope);
 
-    if (monke.body.pos.y > windheight())
+    if (monke.body.pos.y > w_height())
         death_timer += timestep();
     else
         death_timer = 0.0;
@@ -159,7 +170,7 @@ static void draw_rope(Rope rope) {
 }
 
 void draw(double dt) {
-    set_camera_target(XY(monke.body.pos.x - windwidth() / 4, 0.0));
+    set_camera_target(XY(monke.body.pos.x - w_width() / 4, 0.0));
     update_camera(dt);
 
     draw_rope(monke.rope);
@@ -176,6 +187,6 @@ void draw(double dt) {
     if (death_timer > 0.0) {
         const char* txt = "DEATH IMMINENT";
         const double fs = 50.0;
-        draw_text(XY(0.5 * (windwidth() - text_width(fs, txt)), windheight() - fs), fs, txt);
+        draw_text(XY(0.5 * (w_width() - text_width(fs, txt)), w_height() - fs), fs, txt);
     }
 }
