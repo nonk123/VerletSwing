@@ -8,7 +8,7 @@
 
 #define SLIVER (4.0)
 #define MAX_HOOK_DISTANCE (460.0)
-#define RELEASE_BOOST (-10240.0)
+#define RELEASE_BOOST (10240.0)
 
 typedef struct {
     VerletBody *segs, *start;
@@ -67,7 +67,7 @@ void restart() {
 static void maybe_manifest_rope() {
     if (!is_pressed()) {
         if (monke.rope.segs)
-            push(&monke.body, XY(0.0, RELEASE_BOOST));
+            push(&monke.body, XY(0.0, -RELEASE_BOOST));
         nuke_rope(&monke.rope);
     }
 
