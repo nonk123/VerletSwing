@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.27.0 FATAL_ERROR)
 
-project(VerletSwing VERSION 0.1.0
+project(VerletSwing
+    VERSION 0.1.0
+    DESCRIPTION "Verlet Swing"
     LANGUAGES C)
 
 set(CMAKE_C_STANDARD 11)
