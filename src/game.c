@@ -80,7 +80,7 @@ static void maybe_manifest_rope() {
         return;
 
     const Vec2 dir = Vsub(anchors[closest].pos, monke.body.pos);
-    const size_t segs = (size_t)(SDL_fabs(dir.x) / SLIVER);
+    const size_t segs = (size_t)(Vlen(dir) / SLIVER);
 
     if (segs < 2)
         return;
