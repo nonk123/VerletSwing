@@ -29,8 +29,11 @@ SDL_AppResult SDL_AppInit(void** ctx, int argc, char* argv[]) {
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
         return SDL_Fail();
 
-    if (!SDL_CreateWindowAndRenderer(GAME_NAME, 800, 600, SDL_WINDOW_RESIZABLE, &window, &renderer))
+    if (!SDL_CreateWindowAndRenderer(
+            GAME_NAME, 800, 600, SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED, &window, &renderer))
+    {
         return SDL_Fail();
+    }
 
     if (!sdl_load_font())
         return SDL_Fail();
