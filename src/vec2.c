@@ -18,7 +18,13 @@ Vec2 Vscale(Vec2 a, double s) {
 }
 
 double Vlen(Vec2 v) {
-    const double min = SDL_min(v.x, v.y), max = SDL_max(v.x, v.y), r = min / max;
+    v.x = SDL_fabs(v.x), v.y = SDL_fabs(v.y);
+    const double min = SDL_min(v.x, v.y), max = SDL_max(v.x, v.y);
+
+    if (max <= 1e-3)
+        return 0.0;
+
+    const double r = min / max;
     return max * SDL_sqrt(1.0 + r * r);
 }
 

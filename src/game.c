@@ -6,8 +6,8 @@
 #include "game.h"
 #include "verlet.h"
 
-#define SLIVER 4.0
-#define MAX_HOOK_DISTANCE 224.0
+#define SLIVER (4.0)
+#define MAX_HOOK_DISTANCE (860.0)
 
 typedef struct {
     VerletBody *segs, *start;
@@ -64,10 +64,8 @@ void restart() {
 }
 
 static void maybe_manifest_rope() {
-    if (!is_pressed() && monke.rope.segs) {
+    if (!is_pressed())
         nuke_rope(&monke.rope);
-        return;
-    }
 
     if (!is_pressed() || monke.rope.segs || !TinyDLength(anchors))
         return;
@@ -88,40 +86,41 @@ static void maybe_manifest_rope() {
     const Vec2 dir = Vsub(anchors[closest].pos, monke.body.pos);
     const size_t segs = (size_t)(SDL_fabs(dir.x) / SLIVER);
 
-    for (size_t i = 0; i < segs; i++) {
+    for (size_t i = 0; i <= segs; i++) {
         const Vec2 pos = Vscale(dir, (double)i / (double)segs);
 
         VerletBody seg = {0};
         init_verlet(&seg, Vadd(pos, monke.body.pos));
-        seg.f_gravity = true;
+        seg.f_gravity = i < segs;
 
         monke.rope.segs = TinyDAppendPro(monke.rope.segs, &seg);
     }
 }
 
 static void constrain_rope(Rope* rope) {
-    for (int i = (int)TinyDLength(rope->segs) - 1; i >= 0; i--) {
-        VerletBody* const a = i ? &rope->segs[i - 1] : rope->start;
-        VerletBody* const b = &rope->segs[i];
+    for (int i = -1; i <= (int)TinyDLength(rope->segs) - 2; i++) {
+        VerletBody* const a = i >= 0 ? &rope->segs[i] : rope->start;
+        VerletBody* const b = &rope->segs[i + 1];
 
-        if (i == TinyDLength(rope->segs) - 1)
+        if (i == TinyDLength(rope->segs) - 2)
             b->pos = rope->end; // !! IMPORTANT
         // rope doesn't rope ^ without this
 
         const double dist = Vdist(a->pos, b->pos);
 
-        if (dist <= 1e-4)
-            continue;
+        if (dist > 1e-2) {
+            const double diff = (0.5 * SLIVER - dist) / dist;
+            const Vec2 bounce = Vscale(Vsub(a->pos, b->pos), 0.5 * diff);
 
-        const double diff = (SLIVER - dist) / dist;
-        const Vec2 bounce = Vscale(Vsub(a->pos, b->pos), 0.5 * diff);
-        a->pos = Vadd(a->pos, bounce), b->pos = Vsub(b->pos, bounce);
+            a->pos = Vadd(a->pos, bounce);
+            b->pos = Vsub(b->pos, bounce);
+        }
     }
 }
 
 static void verlet_rope(Rope* rope) {
     for (size_t i = 0; i < TinyDLength(rope->segs); i++)
-        verlet(&rope->segs[i]);
+        verlet(rope->segs + i);
 
     for (size_t i = 0; i < 60; i++)
         constrain_rope(rope);
