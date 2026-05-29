@@ -258,7 +258,7 @@ void draw(double dt) {
 
     fill_square(monke.body.pos, 16.0, RGB(255, 0, 0));
 
-    const double fs = 50.0, pad = 8.0;
+    const double fs = 48.0, pad = 8.0;
 
     if (death_timer > 0.0) {
         const char* txt = "DEATH IMMINENT";
