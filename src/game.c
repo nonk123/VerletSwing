@@ -9,6 +9,8 @@
 
 #define SLIVER (4.0)
 #define MAX_HOOK_DISTANCE (460.0)
+
+#define RELEASE_BOOST_COOLDOWN (1.5)
 #define RELEASE_BOOST (10240.0)
 
 #define DEATH_SECS (1.4)
@@ -21,6 +23,7 @@ typedef struct {
 typedef struct {
     VerletBody body;
     Rope rope;
+    double boost_cooldown;
 } Monke;
 
 typedef struct {
@@ -41,7 +44,10 @@ static void nuke_rope(Rope* this) {
 static void init_monke(Monke* this) {
     Vec2 pos = Vscale(XY(w_width(), 0.0), 0.5);
     init_verlet(&this->body, pos);
+
     nuke_rope(&monke.rope);
+
+    this->boost_cooldown = 0.0;
 }
 
 static void place_anchor(const double x) {
@@ -133,9 +139,17 @@ static int closest_anchor() {
 }
 
 static void maybe_manifest_rope() {
+    monke.boost_cooldown -= timestep();
+
+    if (monke.boost_cooldown < 1e-3)
+        monke.boost_cooldown = 0.0;
+
     if (!is_pressed()) {
-        if (monke.rope.segs)
+        if (monke.rope.segs && monke.boost_cooldown == 0.0) {
             push(&monke.body, XY(0.0, -RELEASE_BOOST));
+            monke.boost_cooldown = RELEASE_BOOST_COOLDOWN;
+        }
+
         nuke_rope(&monke.rope);
     }
 
