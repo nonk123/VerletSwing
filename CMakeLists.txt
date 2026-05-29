@@ -12,7 +12,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS ON)
 
 set(BUILD_SHARED_LIBS OFF)
-set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
+
+# bypass "emcc: error: sdl3 port is still experimental [-Wexperimental] [-Werror]"
+set(CMAKE_COMPILE_WARNING_AS_ERROR $<NOT:$<BOOL:${EMSCRIPTEN}>>)
 
 include(FetchContent)
 set(FETCHCONTENT_QUIET FALSE)
@@ -62,5 +64,6 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
 
 if(EMSCRIPTEN)
+    target_compile_options(${PROJECT_NAME} PRIVATE -sUSE_SDL=3)
     target_link_options(${PROJECT_NAME} PRIVATE -sUSE_SDL=3)
 endif()
