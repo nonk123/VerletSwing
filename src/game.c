@@ -15,6 +15,8 @@
 
 #define DEATH_SECS (1.4)
 
+static uint64_t score = 0;
+
 typedef struct {
     VerletBody *segs, *start;
     Vec2 end;
@@ -28,12 +30,12 @@ typedef struct {
 
 typedef struct {
     Vec2 pos;
+    bool scored;
 } Anchor;
 
 static Monke monke = {0};
 static Anchor* anchors = NULL;
 
-static uint64_t anchor_seed = 0;
 static double death_timer = 0.0;
 
 static void nuke_rope(Rope* this) {
@@ -42,7 +44,7 @@ static void nuke_rope(Rope* this) {
 }
 
 static void init_monke(Monke* this) {
-    Vec2 pos = Vscale(XY(w_width(), 0.0), 0.5);
+    Vec2 pos = Vscale(XY(0.0, -24.0), 0.5);
     init_verlet(&this->body, pos);
 
     nuke_rope(&monke.rope);
@@ -100,8 +102,7 @@ static void generate_anchors() {
 }
 
 void restart() {
-    SDL_GetCurrentTime((SDL_Time*)&anchor_seed);
-    SDL_srand(anchor_seed);
+    score = 0;
 
     init_monke(&monke);
     monke.body.f_gravity = true;
@@ -110,6 +111,15 @@ void restart() {
     anchors = MakeTinyD(Anchor);
 
     generate_anchors();
+}
+
+static void score_anchors() {
+    for (size_t i = 0; i < TinyDLength(anchors); i++) {
+        const double x = anchors[i].pos.x;
+
+        if (!anchors[i].scored && x >= 0.0 && monke.body.pos.x >= x)
+            score += 1, anchors[i].scored = true;
+    }
 }
 
 static int closest_anchor() {
@@ -213,6 +223,7 @@ static void verlet_rope(Rope* rope) {
 
 void update() {
     generate_anchors();
+    score_anchors();
     maybe_manifest_rope();
 
     verlet(&monke.body);
@@ -256,5 +267,8 @@ void draw(double dt) {
 
     static char buf[128] = {0};
     SDL_snprintf(buf, sizeof(buf), "A%zu", TinyDLength(anchors));
-    draw_text(XY(w_width() - text_width(fs, buf) - pad, 0.0), fs, buf);
+    draw_text(XY(w_width() - text_width(fs, buf) - pad, pad), fs, buf);
+
+    SDL_snprintf(buf, sizeof(buf), "SCORE: %llu", score);
+    draw_text(XY(0.5 * (w_width() - text_width(fs, buf)), pad), fs, buf);
 }
