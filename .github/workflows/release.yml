@@ -29,7 +29,8 @@ jobs:
       id-token: write
 
     env:
-      CACHE_BUST: 0
+      EMSDK_CACHE_DIR: emsdk
+      EMSDK_VERSION: 5.0.7
 
       BUILDDIR: build
       OUTDIR: dist
@@ -37,12 +38,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-
-      - name: Restore source timestamps for crazy CMake caching benefits
-        uses: chetan/git-restore-mtime-action@v2
-
-      - name: Install Emscripten SDK
-        uses: emscripten-core/setup-emsdk@v15
 
       - name: Install dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest
@@ -57,19 +52,14 @@ jobs:
             libibus-1.0-dev libudev-dev libthai-dev libpipewire-0.3-dev libwayland-dev
             libdecor-0-dev liburing-dev
 
-      - name: Cache build dir
-        id: cache-build
-        uses: actions/cache@v5
+      - name: Install Emscripten SDK
+        uses: emscripten-core/setup-emsdk@v16
         with:
-          path: ${{ env.BUILDDIR }}
-          key: ${{ env.CACHE_BUST }}-${{ github.ref_name }}-${{ hashFiles('CMakeLists.txt') }}
-          restore-keys: |
-            ${{ env.CACHE_BUST }}-${{ github.ref_name }}-
-            ${{ env.CACHE_BUST }}-
+          version: ${{ env.EMSDK_VERSION }}
+          actions-cache-folder: ${{ env.EMSDK_CACHE_DIR }}
 
       - name: Configure
-        run: |
-          emcmake cmake -G Ninja -S . -B ${{ env.BUILDDIR }} -D CMAKE_BUILD_TYPE=Release
+        run: emcmake cmake -G Ninja -S . -B ${{ env.BUILDDIR }} -D CMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: |
@@ -78,7 +68,7 @@ jobs:
           rm -rf ${{ env.OUTDIR }}; mkdir -p ${{ env.OUTDIR }}
           cp ${{ env.BUILDDIR }}/VerletSwing.{js,wasm,data} ${{ env.OUTDIR }}
           cp ${{ env.BUILDDIR }}/VerletSwing.html ${{ env.OUTDIR }}/index.html
-        # TODO: maybe use a custom ^ harness?
+        # TODO: maybe use a custom ^ index.html harness?
 
       - name: Setup Pages
         uses: actions/configure-pages@v6
