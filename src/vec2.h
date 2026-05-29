@@ -10,3 +10,4 @@ Vec2 Vadd(Vec2, Vec2), Vsub(Vec2, Vec2);
 Vec2 Vscale(Vec2, double);
 
 double Vlen(Vec2), Vdist(Vec2, Vec2);
+Vec2 Vnorm(Vec2);

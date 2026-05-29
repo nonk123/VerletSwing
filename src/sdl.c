@@ -87,17 +87,17 @@ SDL_AppResult SDL_AppIterate(void* ctx) {
     if (then)
         ticks += (double)(now - then) / (NANOSEC / TICKRATE);
 
-    then = now;
-
     for (; ticks >= 1.0; ticks -= 1.0)
         update();
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(renderer);
 
-    draw();
+    draw((double)(now - then) / NANOSEC);
 
     SDL_RenderPresent(renderer);
+
+    then = now;
 
     return SDL_APP_CONTINUE;
 }

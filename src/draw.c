@@ -11,14 +11,22 @@
 
 #define GLYPH_COUNT ((FONT_WIDTH / GLYPH_WIDTH) * (FONT_HEIGHT / GLYPH_HEIGHT))
 
-static Vec2 cam_offset = XY(0.0, 0.0);
+static const double cam_speed = 10240.0;
+static Vec2 cam_offset = XY(0.0, 0.0), cam_target = XY(0.0, 0.0);
 
 Vec2 camera_pos() {
     return cam_offset;
 }
 
-void set_camera_pos(Vec2 value) {
-    cam_offset = value;
+void set_camera_target(Vec2 value) {
+    cam_target = value;
+}
+
+void update_camera(double dt) {
+    const Vec2 dir = Vnorm(Vsub(cam_target, cam_offset));
+    const double dist = Vlen(Vsub(cam_target, cam_offset));
+    const double vel = SDL_min(cam_speed * dt, dist);
+    cam_offset = Vadd(cam_offset, Vscale(dir, vel));
 }
 
 static SDL_Texture* fontsheet = NULL;

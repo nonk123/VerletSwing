@@ -47,11 +47,13 @@ void restart() {
     FreeTinyD(anchors);
     anchors = MakeTinyD(Anchor);
 
-    const double step = 512.f;
+    const double step = 0.7 * MAX_HOOK_DISTANCE;
+    double x = monke.body.pos.x + step;
 
     for (int i = 0; i < 10; i++) {
-        const double x = step * i, y = windheight() / 4 + SDL_rand(windheight() / 2);
+        const double y = windheight() / 4 + SDL_rand(windheight() / 2);
         anchors = TinyDAppendPro(anchors, &(Anchor){x, y});
+        x += step * (0.5 + SDL_randf());
     }
 }
 
@@ -156,9 +158,9 @@ static void draw_rope(Rope rope) {
         fill_square(rope.segs[i].pos, 3.0, RGB(255, 255, 255));
 }
 
-void draw() {
-    // TODO: set camera pos here...
-    set_camera_pos(XY(0.0, 0.0));
+void draw(double dt) {
+    set_camera_target(XY(monke.body.pos.x - windwidth() / 4, 0.0));
+    update_camera(dt);
 
     draw_rope(monke.rope);
 

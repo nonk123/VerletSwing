@@ -10,7 +10,8 @@ bool sdl_load_font();
 int windwidth(), windheight();
 
 Vec2 camera_pos();
-void set_camera_pos(Vec2);
+void set_camera_target(Vec2);
+void update_camera(double);
 
 void fill_square(Vec2, double, SDL_Color);
 

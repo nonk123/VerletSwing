@@ -31,3 +31,13 @@ double Vlen(Vec2 v) {
 double Vdist(Vec2 a, Vec2 b) {
     return Vlen(Vsub(b, a));
 }
+
+Vec2 Vnorm(Vec2 v) {
+    const double len = Vlen(v);
+
+    if (len <= 1e-3)
+        return XY(0.0, 0.0);
+
+    v.x /= len, v.y /= len;
+    return v;
+}
