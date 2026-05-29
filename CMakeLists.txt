@@ -29,15 +29,13 @@ set(SDL_CAMERA OFF CACHE INTERNAL "")
 set(SDL_JOYSTICK OFF CACHE INTERNAL "")
 set(SDL_HAPTIC OFF CACHE INTERNAL "")
 
-if(NOT EMSCRIPTEN) # emscripten ships its own SDL3 apparently???
-    FetchContent_Declare(SDL3
-        GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
-        GIT_TAG release-3.4.8
-        EXCLUDE_FROM_ALL)
+FetchContent_Declare(SDL3
+    GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+    GIT_TAG release-3.4.8
+    EXCLUDE_FROM_ALL)
 
-    FetchContent_MakeAvailable(SDL3)
-    list(APPEND LIBS SDL3::SDL3-static)
-endif()
+FetchContent_MakeAvailable(SDL3)
+list(APPEND LIBS SDL3::SDL3-static)
 
 FetchContent_Declare(S_tructures
     GIT_REPOSITORY https://github.com/Schwungus/S_tructures
@@ -49,6 +47,8 @@ list(APPEND LIBS S_tructures)
 
 if(EMSCRIPTEN)
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
+else()
+    set(DEBUG_ASSETS_DIR ${CMAKE_SOURCE_DIR}/assets)
 endif()
 
 file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.c)
@@ -64,6 +64,5 @@ target_include_directories(${PROJECT_NAME}
 target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
 
 if(EMSCRIPTEN)
-    target_compile_options(${PROJECT_NAME} PRIVATE -sUSE_SDL=3)
-    target_link_options(${PROJECT_NAME} PRIVATE -sUSE_SDL=3)
+    target_link_options(${PROJECT_NAME} PRIVATE --preload-file ${CMAKE_SOURCE_DIR}/assets@assets)
 endif()

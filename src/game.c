@@ -1,14 +1,14 @@
-#include <SDL3/SDL_render.h>
-#include <SDL3/SDL_video.h>
-
 #include <S_tructures.h>
 
+#include "draw.h"
 #include "game.h"
 #include "verlet.h"
 
 #define SLIVER (4.0)
 #define MAX_HOOK_DISTANCE (460.0)
 #define RELEASE_BOOST (10240.0)
+
+#define DEATH_SECS (1.4)
 
 typedef struct {
     VerletBody *segs, *start;
@@ -27,29 +27,20 @@ typedef struct {
 static Monke monke = {0};
 static Anchor* anchors = NULL;
 
+static double death_timer = 0.0;
+
 static void nuke_rope(Rope* this) {
     FreeTinyD(this->segs);
     this->start = this->segs = NULL;
 }
 
 static void init_monke(Monke* this) {
-    int w = 0;
-
-    extern SDL_Window* window;
-    SDL_GetWindowSize(window, &w, NULL);
-
-    Vec2 pos = Vscale(XY(w, 0.0), 0.5);
+    Vec2 pos = Vscale(XY(windwidth(), 0.0), 0.5);
     init_verlet(&this->body, pos);
-
     nuke_rope(&monke.rope);
 }
 
 void restart() {
-    int h = 0;
-
-    extern SDL_Window* window;
-    SDL_GetWindowSize(window, NULL, &h);
-
     init_monke(&monke);
     monke.body.f_gravity = true;
 
@@ -59,7 +50,7 @@ void restart() {
     const double step = 512.f;
 
     for (int i = 0; i < 10; i++) {
-        const double x = step * i, y = h / 4 + SDL_rand(h / 2);
+        const double x = step * i, y = windheight() / 4 + SDL_rand(windheight() / 2);
         anchors = TinyDAppendPro(anchors, &(Anchor){x, y});
     }
 }
@@ -150,38 +141,39 @@ void update() {
 
     verlet(&monke.body);
     verlet_rope(&monke.rope);
+
+    if (monke.body.pos.y > windheight())
+        death_timer += timestep();
+    else
+        death_timer = 0.0;
+
+    if (death_timer >= DEATH_SECS)
+        restart();
 }
-
-static void fill_square(Vec2 pos, float radius, SDL_Color color) {
-    extern SDL_Renderer* renderer;
-
-    const SDL_FRect rect = {
-        .x = (float)pos.x - radius,
-        .y = (float)pos.y - radius,
-        .w = radius * 2.f,
-        .h = radius * 2.f,
-    };
-
-    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
-    SDL_RenderFillRect(renderer, &rect);
-}
-
-#define RGB(_r, _g, _b) ((SDL_Color){.r = (_r), .g = (_g), .b = (_b), .a = SDL_ALPHA_OPAQUE})
 
 static void draw_rope(Rope rope) {
     for (size_t i = 0; i < TinyDLength(rope.segs); i++)
-        fill_square(rope.segs[i].pos, 3.f, RGB(255, 255, 255));
+        fill_square(rope.segs[i].pos, 3.0, RGB(255, 255, 255));
 }
 
 void draw() {
+    // TODO: set camera pos here...
+    set_camera_pos(XY(0.0, 0.0));
+
     draw_rope(monke.rope);
 
     const int closest = closest_anchor();
 
     for (int i = 0; i < TinyDLength(anchors); i++) {
         const SDL_Color col = i == closest ? RGB(255, 255, 0) : RGB(127, 127, 0);
-        fill_square(anchors[i].pos, 16.f, col);
+        fill_square(anchors[i].pos, 16.0, col);
     }
 
-    fill_square(monke.body.pos, 16.f, RGB(255, 0, 0));
+    fill_square(monke.body.pos, 16.0, RGB(255, 0, 0));
+
+    if (death_timer > 0.0) {
+        const char* txt = "DEATH IMMINENT";
+        const double fs = 50.0;
+        draw_text(XY(0.5 * (windwidth() - text_width(fs, txt)), windheight() - fs), fs, txt);
+    }
 }

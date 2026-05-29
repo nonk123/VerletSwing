@@ -11,6 +11,7 @@
 #include <S_tructures.h>
 
 #include "cmake.h"
+#include "draw.h"
 #include "game.h"
 
 SDL_Window* window = NULL;
@@ -27,14 +28,10 @@ SDL_AppResult SDL_AppInit(void** ctx, int argc, char* argv[]) {
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
         return SDL_Fail();
 
-    window = SDL_CreateWindow(GAME_NAME, 800, 600, SDL_WINDOW_RESIZABLE);
-
-    if (!window)
+    if (!SDL_CreateWindowAndRenderer(GAME_NAME, 800, 600, SDL_WINDOW_RESIZABLE, &window, &renderer))
         return SDL_Fail();
 
-    renderer = SDL_CreateRenderer(window, NULL);
-
-    if (!renderer)
+    if (!sdl_load_font())
         return SDL_Fail();
 
     SDL_SetRenderVSync(renderer, SDL_RENDERER_VSYNC_ADAPTIVE);
@@ -73,6 +70,9 @@ SDL_AppResult SDL_AppEvent(void* ctx, SDL_Event* event) {
 }
 
 #define TICKRATE (60)
+#define NANOSEC (1000000000.0)
+
+static uint64_t then = 0, now = 0;
 
 double timestep() {
     return 1.0 / TICKRATE;
@@ -81,13 +81,11 @@ double timestep() {
 SDL_AppResult SDL_AppIterate(void* ctx) {
     (void)ctx;
 
-    static uint64_t then = 0;
     static double ticks = 0.0;
-
-    const uint64_t now = SDL_GetTicksNS();
+    now = SDL_GetTicksNS();
 
     if (then)
-        ticks += (double)(now - then) / (1000000000.0 / TICKRATE);
+        ticks += (double)(now - then) / (NANOSEC / TICKRATE);
 
     then = now;
 
@@ -114,4 +112,16 @@ void SDL_AppQuit(void* ctx, SDL_AppResult result) {
         SDL_DestroyWindow(window);
 
     SDL_Quit();
+}
+
+int windwidth() {
+    int w = 0;
+    SDL_GetWindowSize(window, &w, NULL);
+    return w;
+}
+
+int windheight() {
+    int h = 0;
+    SDL_GetWindowSize(window, NULL, &h);
+    return h;
 }
