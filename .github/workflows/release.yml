@@ -39,6 +39,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Restore source timestamps for crazy CMake caching benefits
+        uses: chetan/git-restore-mtime-action@v2
+
       - name: Install dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
@@ -57,6 +60,16 @@ jobs:
         with:
           version: ${{ env.EMSDK_VERSION }}
           actions-cache-folder: ${{ env.EMSDK_CACHE_DIR }}
+
+      - name: Cache build dir
+        id: cache-build
+        uses: actions/cache@v5
+        with:
+          path: ${{ env.BUILDDIR }}
+          key: ${{ env.EMSDK_VERSION }}-${{ github.ref_name }}-${{ hashFiles('CMakeLists.txt') }}
+          restore-keys: |
+            ${{ env.EMSDK_VERSION }}-${{ github.ref_name }}-
+            ${{ env.EMSDK_VERSION }}-
 
       - name: Configure
         run: emcmake cmake -G Ninja -S . -B ${{ env.BUILDDIR }} -D CMAKE_BUILD_TYPE=Release
