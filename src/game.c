@@ -263,7 +263,12 @@ static void draw_rope(Rope rope) {
         fill_square(rope.segs[i].pos, 3.0, RGB(255, 255, 255));
 }
 
+#define BACKGROUND_BASE RGB(0, 0, 0)
+#define BACKGROUND_DEAD RGB(127, 15, 15)
+
 void draw() {
+    clear_screen(lerp_color(BACKGROUND_BASE, BACKGROUND_DEAD, 1.0 - death_timer / DEATH_SECS));
+
     set_camera_target(XY(monke.body.pos.x - w_width() / 4, 0.0));
     update_camera();
 
@@ -279,11 +284,6 @@ void draw() {
     fill_square(monke.body.pos, 16.0, RGB(255, 0, 0));
 
     const double fs = 48.0, pad = 8.0;
-
-    if (death_timer < DEATH_SECS) {
-        const char* txt = "DEATH IMMINENT";
-        draw_text(XY(0.5 * (w_width() - text_width(fs, txt)), w_height() - fs - pad), fs, txt);
-    }
 
     const char* s = fmt("A%zu", TinyDLength(anchors));
     draw_text(XY(w_width() - text_width(fs, s) - pad, pad), fs, s);

@@ -15,6 +15,13 @@
 #define CAM_SPEED (10240.0)
 #define CAM_MAX_DELAY (0.5)
 
+SDL_Color lerp_color(SDL_Color from, SDL_Color to, double f) {
+    from.r = (uint8_t)((double)from.r + (double)(to.r - from.r) * f);
+    from.g = (uint8_t)((double)from.g + (double)(to.g - from.g) * f);
+    from.b = (uint8_t)((double)from.b + (double)(to.b - from.b) * f);
+    return from;
+}
+
 static Vec2 cam_offset = XY(0.0, 0.0), cam_target = XY(0.0, 0.0);
 
 Vec2 camera_pos() {
@@ -52,6 +59,11 @@ bool sdl_load_font() {
     SDL_DestroySurface(surf);
 
     return true;
+}
+
+void clear_screen(SDL_Color color) {
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(renderer);
 }
 
 void fill_square(Vec2 pos, double ext, SDL_Color color) {

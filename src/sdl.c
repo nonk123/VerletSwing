@@ -170,9 +170,6 @@ SDL_AppResult SDL_AppIterate(void* ctx) {
         right_press = false;
     }
 
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear(renderer);
-
     draw();
 
     SDL_RenderPresent(renderer);
