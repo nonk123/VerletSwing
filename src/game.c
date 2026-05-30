@@ -16,6 +16,9 @@
 #define RELEASE_BOOST_COOLDOWN (1.5)
 #define RELEASE_BOOST (10240.0)
 
+#define DASH_COOLDOWN (1.5)
+#define DASH_BOOST (25600.0)
+
 #define DEATH_SECS (1.4)
 
 static uint64_t score = 0;
@@ -28,7 +31,7 @@ typedef struct {
 typedef struct {
     VerletBody body;
     Rope rope;
-    double boost_cooldown;
+    double boost_cooldown, dash_cooldown;
 } Monke;
 
 typedef struct {
@@ -40,6 +43,13 @@ static Monke monke = {0};
 static Anchor* anchors = NULL;
 
 static double death_timer = 0.0;
+
+static void tick_timer(double* rem) {
+    *rem -= timestep();
+
+    if (*rem <= 1e-3)
+        *rem = 0.0;
+}
 
 static void nuke_rope(Rope* this) {
     FreeTinyD(this->segs);
@@ -53,6 +63,7 @@ static void init_monke(Monke* this) {
     nuke_rope(&monke.rope);
 
     this->boost_cooldown = 0.0;
+    this->dash_cooldown = 0.0;
 }
 
 static void place_anchor(double x) {
@@ -146,12 +157,9 @@ static int closest_anchor() {
 }
 
 static void maybe_manifest_rope() {
-    monke.boost_cooldown -= timestep();
+    tick_timer(&monke.boost_cooldown);
 
-    if (monke.boost_cooldown < 1e-3)
-        monke.boost_cooldown = 0.0;
-
-    if (!is_pressed()) {
+    if (!is_left_pressed()) {
         if (monke.rope.segs && monke.boost_cooldown == 0.0) {
             push(&monke.body, XY(0.0, -RELEASE_BOOST));
             monke.boost_cooldown = RELEASE_BOOST_COOLDOWN;
@@ -160,7 +168,7 @@ static void maybe_manifest_rope() {
         nuke_rope(&monke.rope);
     }
 
-    if (!is_pressed() || monke.rope.segs)
+    if (!is_left_pressed() || monke.rope.segs)
         return;
 
     const int closest = closest_anchor();
@@ -223,15 +231,22 @@ void update() {
     score_anchors();
     maybe_manifest_rope();
 
+    tick_timer(&monke.dash_cooldown);
+
+    if (is_right_pressed() && monke.dash_cooldown == 0.0) {
+        push(&monke.body, XY(DASH_BOOST, 0.0));
+        monke.dash_cooldown = DASH_COOLDOWN;
+    }
+
     verlet(&monke.body);
     verlet_rope(&monke.rope);
 
     if (monke.body.pos.y > w_height())
-        death_timer += timestep();
+        tick_timer(&death_timer);
     else
-        death_timer = 0.0;
+        death_timer = DEATH_SECS;
 
-    if (death_timer >= DEATH_SECS)
+    if (death_timer == 0.0)
         restart();
 }
 
@@ -257,7 +272,7 @@ void draw(double dt) {
 
     const double fs = 48.0, pad = 8.0;
 
-    if (death_timer > 0.0) {
+    if (death_timer < DEATH_SECS) {
         const char* txt = "DEATH IMMINENT";
         draw_text(XY(0.5 * (w_width() - text_width(fs, txt)), w_height() - fs - pad), fs, txt);
     }

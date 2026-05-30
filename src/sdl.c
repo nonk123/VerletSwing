@@ -15,6 +15,9 @@
 #include "game.h"
 #include "sdl.h"
 
+#define SWIPE_THRESHOLD (0.08)
+#define SWIPE_TIMEOUT (0.25)
+
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
 
@@ -46,23 +49,79 @@ SDL_AppResult SDL_AppInit(void** ctx, int argc, char* argv[]) {
     return SDL_APP_CONTINUE;
 }
 
-bool is_pressed() {
-    return SDL_GetKeyboardState(NULL)[SDL_SCANCODE_SPACE] || (SDL_GetMouseState(NULL, NULL) & SDL_BUTTON_LMASK);
+static bool left_press = false, right_press = false;
+
+bool is_left_pressed() {
+    return left_press;
+}
+
+bool is_right_pressed() {
+    return right_press;
 }
 
 SDL_AppResult SDL_AppEvent(void* ctx, SDL_Event* event) {
     (void)ctx;
 
+    static SDL_FingerID grapple_finger = 0;
+
     switch (event->type) {
     case SDL_EVENT_WINDOW_CLOSE_REQUESTED:
         return SDL_APP_SUCCESS;
 
+    case SDL_EVENT_FINGER_DOWN:
+        if (event->tfinger.x <= 0.5) {
+            left_press = true;
+            grapple_finger = event->tfinger.fingerID;
+        }
+
+        if (event->tfinger.x > 0.5)
+            right_press = true;
+
+        break;
+
+    case SDL_EVENT_FINGER_UP:
+        if (event->tfinger.fingerID == grapple_finger)
+            left_press = false;
+
+        break;
+
+    case SDL_EVENT_MOUSE_BUTTON_DOWN:
+        if (event->button.button == SDL_BUTTON_LEFT)
+            left_press = true;
+
+        if (event->button.button == SDL_BUTTON_RIGHT)
+            right_press = true;
+
+        break;
+
+    case SDL_EVENT_MOUSE_BUTTON_UP:
+        if (event->button.button == SDL_BUTTON_LEFT)
+            left_press = false;
+
+        // right_press gets reset after `update()` either way
+
+        break;
+
     case SDL_EVENT_KEY_DOWN:
+#ifndef __EMSCRIPTEN__
         if (event->key.key == SDLK_ESCAPE)
             return SDL_APP_SUCCESS;
+#endif
+
+        if (event->key.key == SDLK_SPACE)
+            left_press = true;
+
+        if (event->key.key == SDLK_LSHIFT)
+            right_press = true;
 
         if (event->key.key == SDLK_R)
             restart();
+
+        break;
+
+    case SDL_EVENT_KEY_UP:
+        if (event->key.key == SDLK_SPACE)
+            left_press = false;
 
         break;
 
@@ -88,20 +147,24 @@ SDL_AppResult SDL_AppIterate(void* ctx) {
     static double ticks = 0.0;
     now = SDL_GetTicksNS();
 
+    const double dt = (double)(now - then) / NANOSEC;
+
     if (then)
         ticks += (double)(now - then) / (NANOSEC / TICKRATE);
 
-    for (; ticks >= 1.0; ticks -= 1.0)
+    then = now;
+
+    for (; ticks >= 1.0; ticks -= 1.0) {
         update();
+        right_press = false;
+    }
 
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(renderer);
 
-    draw((double)(now - then) / NANOSEC);
+    draw(dt);
 
     SDL_RenderPresent(renderer);
-
-    then = now;
 
     return SDL_APP_CONTINUE;
 }
