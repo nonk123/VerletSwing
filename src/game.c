@@ -149,6 +149,16 @@ static int closest_anchor() {
         return -1;
 
     int closest = 0;
+    const double ahead = 2.0 * monke.body.pos.x - monke.body.old_pos.x;
+
+    for (int i = 1; i < TinyDLength(anchors); i++)
+        if (SDL_fabs(ahead - anchors[i].pos.x) <= SDL_fabs(ahead - anchors[closest].pos.x))
+            closest = i;
+
+    if (Vdist(monke.body.pos, anchors[closest].pos) <= MAX_HOOK_DISTANCE)
+        return closest;
+
+    closest = 0;
 
     for (int i = 1; i < TinyDLength(anchors); i++)
         if (Vdist(monke.body.pos, anchors[i].pos) <= Vdist(monke.body.pos, anchors[closest].pos))
