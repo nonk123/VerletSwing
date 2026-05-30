@@ -15,9 +15,6 @@ set(CMAKE_CXX_EXTENSIONS ON)
 
 set(BUILD_SHARED_LIBS OFF)
 
-# bypass "emcc: error: sdl3 port is still experimental [-Wexperimental] [-Werror]"
-set(CMAKE_COMPILE_WARNING_AS_ERROR $<NOT:$<BOOL:${EMSCRIPTEN}>>)
-
 include(FetchContent)
 set(FETCHCONTENT_QUIET FALSE)
 
