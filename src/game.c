@@ -183,7 +183,7 @@ static void maybe_manifest_rope() {
 
         VerletBody seg = {0};
         init_verlet(&seg, Vadd(pos, monke.body.pos));
-        seg.f_gravity = i < segs;
+        seg.f_gravity = true;
 
         monke.rope.segs = TinyDAppendPro(monke.rope.segs, &seg);
     }
