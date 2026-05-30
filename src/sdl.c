@@ -86,6 +86,9 @@ SDL_AppResult SDL_AppEvent(void* ctx, SDL_Event* event) {
         break;
 
     case SDL_EVENT_MOUSE_BUTTON_DOWN:
+        if (event->button.which == SDL_TOUCH_MOUSEID)
+            break;
+
         if (event->button.button == SDL_BUTTON_LEFT)
             left_press = true;
 
@@ -95,6 +98,9 @@ SDL_AppResult SDL_AppEvent(void* ctx, SDL_Event* event) {
         break;
 
     case SDL_EVENT_MOUSE_BUTTON_UP:
+        if (event->button.which == SDL_TOUCH_MOUSEID)
+            break;
+
         if (event->button.button == SDL_BUTTON_LEFT)
             left_press = false;
 
