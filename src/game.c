@@ -13,6 +13,7 @@
 
 #define ANCHOR_STEP (0.7 * MAX_HOOK_DISTANCE)
 #define CULL_RADIUS (2.0 * w_width())
+#define FIRST_ANCHOR_X (ANCHOR_STEP)
 
 #define RELEASE_BOOST_COOLDOWN (1.5)
 #define RELEASE_BOOST (256.0)
@@ -70,8 +71,13 @@ static void init_monke(Monke* this) {
     this->dash_cooldown = 0.0;
 }
 
-static void place_anchor(double x) {
-    const double y = 16.0 + SDL_randf() * (w_height() * 0.66);
+static void place_anchor(const double x) {
+    const double pad = 16.0, range = w_height() * 0.66;
+    double y = pad + SDL_randf() * range;
+
+    if (x == FIRST_ANCHOR_X)
+        y = pad + 0.5 * range;
+
     anchors = TinyDAppendPro(anchors, &(Anchor){x, y});
 }
 
@@ -96,7 +102,7 @@ static void generate_anchors() {
     if (TinyDLength(anchors))
         cull_anchors();
     else
-        place_anchor(ANCHOR_STEP);
+        place_anchor(FIRST_ANCHOR_X);
 
     double min = anchors[0].pos.x, max = min;
 
