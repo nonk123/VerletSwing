@@ -284,9 +284,12 @@ void draw() {
     fill_square(monke.body.pos, 16.0, RGB(255, 0, 0));
 
     const double fs = 48.0, pad = 8.0;
+    const char* s = NULL;
 
-    const char* s = fmt("A%zu", TinyDLength(anchors));
+#if DEBUG
+    s = fmt("A%zu", TinyDLength(anchors));
     draw_text(XY(w_width() - text_width(fs, s) - pad, pad), fs, s);
+#endif
 
     s = fmt("SCORE: %llu", score);
     draw_text(XY(0.5 * (w_width() - text_width(fs, s)), pad), fs, s);

@@ -64,7 +64,8 @@ set(DEBUG $<CONFIG:Debug>)
 set(DESKTOP $<NOT:$<BOOL:${EMSCRIPTEN}>>)
 
 target_compile_definitions(${PROJECT_NAME} PRIVATE
-    ASSETS=$<IF:$<AND:${DEBUG},${DESKTOP}>,"${CMAKE_SOURCE_DIR}/assets/","assets/">)
+    ASSETS=$<IF:$<AND:${DEBUG},${DESKTOP}>,"${CMAKE_SOURCE_DIR}/assets/","assets/">
+    DEBUG=${DEBUG})
 
 if(EMSCRIPTEN)
     target_link_options(${PROJECT_NAME} PRIVATE --preload-file ${CMAKE_SOURCE_DIR}/assets@assets)
