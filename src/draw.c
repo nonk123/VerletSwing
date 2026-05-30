@@ -11,7 +11,9 @@
 
 #define GLYPH_COUNT ((FONT_WIDTH / GLYPH_WIDTH) * (FONT_HEIGHT / GLYPH_HEIGHT))
 
-static const double cam_speed = 10240.0;
+#define CAM_SPEED (10240.0)
+#define CAM_MAX_DELAY (0.5)
+
 static Vec2 cam_offset = XY(0.0, 0.0), cam_target = XY(0.0, 0.0);
 
 Vec2 camera_pos() {
@@ -24,8 +26,8 @@ void set_camera_target(Vec2 value) {
 
 void update_camera(double dt) {
     const Vec2 dir = Vnorm(Vsub(cam_target, cam_offset));
-    const double dist = Vlen(Vsub(cam_target, cam_offset));
-    const double vel = dist > cam_speed ? dist - cam_speed : SDL_min(cam_speed * dt, dist);
+    const double dist = Vlen(Vsub(cam_target, cam_offset)), delayed = CAM_SPEED * CAM_MAX_DELAY;
+    const double vel = dist > delayed ? dist - delayed : SDL_min(CAM_SPEED * dt, dist);
     cam_offset = Vadd(cam_offset, Vscale(dir, vel));
 }
 
