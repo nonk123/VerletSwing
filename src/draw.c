@@ -3,11 +3,11 @@
 #include "draw.h"
 #include "vec2.h"
 
-#define FONT_WIDTH 96
-#define FONT_HEIGHT 96
+#define FONT_WIDTH (96)
+#define FONT_HEIGHT (96)
 
-#define GLYPH_WIDTH 6
-#define GLYPH_HEIGHT 12
+#define GLYPH_WIDTH (6)
+#define GLYPH_HEIGHT (12)
 
 #define GLYPH_COUNT ((FONT_WIDTH / GLYPH_WIDTH) * (FONT_HEIGHT / GLYPH_HEIGHT))
 
