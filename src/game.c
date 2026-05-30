@@ -3,6 +3,7 @@
 #include <S_tructures.h>
 
 #include "draw.h"
+#include "fmt.h"
 #include "game.h"
 #include "sdl.h"
 #include "verlet.h"
@@ -284,10 +285,9 @@ void draw(double dt) {
         draw_text(XY(0.5 * (w_width() - text_width(fs, txt)), w_height() - fs - pad), fs, txt);
     }
 
-    static char buf[128] = {0};
-    SDL_snprintf(buf, sizeof(buf), "A%zu", TinyDLength(anchors));
-    draw_text(XY(w_width() - text_width(fs, buf) - pad, pad), fs, buf);
+    const char* s = fmt("A%zu", TinyDLength(anchors));
+    draw_text(XY(w_width() - text_width(fs, s) - pad, pad), fs, s);
 
-    SDL_snprintf(buf, sizeof(buf), "SCORE: %llu", score);
-    draw_text(XY(0.5 * (w_width() - text_width(fs, buf)), pad), fs, buf);
+    s = fmt("SCORE: %llu", score);
+    draw_text(XY(0.5 * (w_width() - text_width(fs, s)), pad), fs, s);
 }
