@@ -10,6 +10,9 @@
 #define SLIVER (4.0)
 #define MAX_HOOK_DISTANCE (460.0)
 
+#define ANCHOR_STEP (0.7 * MAX_HOOK_DISTANCE)
+#define CULL_RADIUS (2.0 * w_width())
+
 #define RELEASE_BOOST_COOLDOWN (1.5)
 #define RELEASE_BOOST (10240.0)
 
@@ -52,31 +55,33 @@ static void init_monke(Monke* this) {
     this->boost_cooldown = 0.0;
 }
 
-static void place_anchor(const double x) {
-    const double y = w_height() / 4 + SDL_rand(w_height() / 2);
+static void place_anchor(double x) {
+    const double y = 16.0 + SDL_randf() * (w_height() * 0.66);
     anchors = TinyDAppendPro(anchors, &(Anchor){x, y});
 }
 
-#define ANCHOR_STEP (0.7 * MAX_HOOK_DISTANCE)
-
 static double step() {
-    return ANCHOR_STEP * (0.5 + SDL_randf());
+    return ANCHOR_STEP * (0.4 + SDL_randf());
 }
 
-static void generate_anchors() {
-    const double center = monke.body.pos.x, radius = 2.0 * w_width();
-
-    if (!TinyDLength(anchors))
-        place_anchor(center + ANCHOR_STEP);
+static void cull_anchors() {
+    const double center = monke.body.pos.x;
 
     for (size_t i = 0; i < TinyDLength(anchors);) {
         const double cur = anchors[i].pos.x;
 
-        if (cur < center - 2.0 * radius || cur > center + 2.0 * radius)
+        if (cur < center - 2.0 * CULL_RADIUS || cur > center + 2.0 * CULL_RADIUS)
             anchors = TinyDErase(anchors, i);
         else
             i += 1;
     }
+}
+
+static void generate_anchors() {
+    if (TinyDLength(anchors))
+        cull_anchors();
+    else
+        place_anchor(ANCHOR_STEP);
 
     double min = anchors[0].pos.x, max = min;
 
@@ -90,12 +95,14 @@ static void generate_anchors() {
             max = cur;
     }
 
-    while (min > center - radius) {
+    const double center = monke.body.pos.x;
+
+    while (min > ANCHOR_STEP && min > center - CULL_RADIUS) {
         min -= step();
         place_anchor(min);
     }
 
-    while (max < center + radius) {
+    while (max < center + CULL_RADIUS) {
         max += step();
         place_anchor(max);
     }
