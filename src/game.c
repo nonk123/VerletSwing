@@ -22,6 +22,9 @@
 
 #define DEATH_SECS (1.4)
 
+#define BACKGROUND_BASE RGB(0, 0, 0)
+#define BACKGROUND_DEAD RGB(127, 15, 15)
+
 static uint64_t score = 0;
 
 typedef struct {
@@ -262,9 +265,6 @@ static void draw_rope(Rope rope) {
     for (size_t i = 0; i < TinyDLength(rope.segs); i++)
         fill_square(rope.segs[i].pos, 3.0, RGB(255, 255, 255));
 }
-
-#define BACKGROUND_BASE RGB(0, 0, 0)
-#define BACKGROUND_DEAD RGB(127, 15, 15)
 
 void draw() {
     clear_screen(lerp_color(BACKGROUND_BASE, BACKGROUND_DEAD, 1.0 - death_timer / DEATH_SECS));
