@@ -7,7 +7,7 @@
 double timestep();
 
 typedef struct {
-    Vec2 pos, old_pos, instant_impulse;
+    Vec2 pos, old_pos;
     uint8_t f_gravity : 1;
 } VerletBody;
 

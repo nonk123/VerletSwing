@@ -8,16 +8,16 @@
 #include "verlet.h"
 
 #define SLIVER (4.0)
-#define MAX_HOOK_DISTANCE (460.0)
+#define MAX_HOOK_DISTANCE (360.0)
 
 #define ANCHOR_STEP (0.7 * MAX_HOOK_DISTANCE)
 #define CULL_RADIUS (2.0 * w_width())
 
 #define RELEASE_BOOST_COOLDOWN (1.5)
-#define RELEASE_BOOST (10240.0)
+#define RELEASE_BOOST (256.0)
 
 #define DASH_COOLDOWN (1.5)
-#define DASH_BOOST (25600.0)
+#define DASH_BOOST (256.0)
 
 #define DEATH_SECS (1.4)
 
@@ -237,7 +237,11 @@ void update() {
     tick_timer(&monke.dash_cooldown);
 
     if (is_right_pressed() && monke.dash_cooldown == 0.0) {
-        push(&monke.body, XY(DASH_BOOST, 0.0));
+        const Vec2 dash = XY(DASH_BOOST, 0.0);
+
+        for (size_t i = 0; i <= TinyDLength(monke.rope.segs); i++)
+            push(i ? &monke.rope.segs[i - 1] : &monke.body, dash);
+
         monke.dash_cooldown = DASH_COOLDOWN;
     }
 
