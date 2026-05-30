@@ -1,6 +1,7 @@
 #include <SDL3/SDL_render.h>
 
 #include "draw.h"
+#include "sdl.h"
 #include "vec2.h"
 
 #define FONT_WIDTH (96)
@@ -24,10 +25,10 @@ void set_camera_target(Vec2 value) {
     cam_target = value;
 }
 
-void update_camera(double dt) {
+void update_camera() {
     const Vec2 dir = Vnorm(Vsub(cam_target, cam_offset));
     const double dist = Vlen(Vsub(cam_target, cam_offset)), delayed = CAM_SPEED * CAM_MAX_DELAY;
-    const double vel = dist > delayed ? dist - delayed : SDL_min(CAM_SPEED * dt, dist);
+    const double vel = dist > delayed ? dist - delayed : SDL_min(CAM_SPEED * delta(), dist);
     cam_offset = Vadd(cam_offset, Vscale(dir, vel));
 }
 

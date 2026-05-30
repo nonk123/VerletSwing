@@ -263,9 +263,9 @@ static void draw_rope(Rope rope) {
         fill_square(rope.segs[i].pos, 3.0, RGB(255, 255, 255));
 }
 
-void draw(double dt) {
+void draw() {
     set_camera_target(XY(monke.body.pos.x - w_width() / 4, 0.0));
-    update_camera(dt);
+    update_camera();
 
     draw_rope(monke.rope);
 

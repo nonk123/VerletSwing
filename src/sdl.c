@@ -142,9 +142,14 @@ SDL_AppResult SDL_AppEvent(void* ctx, SDL_Event* event) {
 #define NANOSEC (1000000000.0)
 
 static uint64_t then = 0, now = 0;
+static double dt = 0.0;
 
 double timestep() {
     return 1.0 / TICKRATE;
+}
+
+double delta() {
+    return dt;
 }
 
 SDL_AppResult SDL_AppIterate(void* ctx) {
@@ -153,7 +158,7 @@ SDL_AppResult SDL_AppIterate(void* ctx) {
     static double ticks = 0.0;
     now = SDL_GetTicksNS();
 
-    const double dt = (double)(now - then) / NANOSEC;
+    dt = (double)(now - then) / NANOSEC;
 
     if (then)
         ticks += (double)(now - then) / (NANOSEC / TICKRATE);
@@ -168,7 +173,7 @@ SDL_AppResult SDL_AppIterate(void* ctx) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
     SDL_RenderClear(renderer);
 
-    draw(dt);
+    draw();
 
     SDL_RenderPresent(renderer);
 

@@ -4,8 +4,6 @@
 
 #include "vec2.h"
 
-double timestep();
-
 typedef struct {
     Vec2 pos, old_pos;
     uint8_t f_gravity : 1;

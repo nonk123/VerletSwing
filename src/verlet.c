@@ -1,3 +1,4 @@
+#include "sdl.h"
 #include "verlet.h"
 
 #define MAX_VEL (176.0)
