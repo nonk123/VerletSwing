@@ -182,6 +182,8 @@ static void maybe_manifest_rope() {
     if (segs < 2)
         return;
 
+    const Vec2 initial_velocity = Vsub(monke.body.pos, monke.body.old_pos);
+
     monke.rope.segs = MakeTinyD(VerletBody);
     monke.rope.end = anchors[closest].pos;
     monke.rope.start = &monke.body;
@@ -191,6 +193,7 @@ static void maybe_manifest_rope() {
 
         VerletBody seg = {0};
         init_verlet(&seg, Vadd(pos, monke.body.pos));
+        seg.old_pos = Vsub(seg.old_pos, initial_velocity);
         seg.f_gravity = true;
 
         monke.rope.segs = TinyDAppendPro(monke.rope.segs, &seg);
