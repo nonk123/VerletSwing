@@ -79,7 +79,7 @@ void fill_square(Vec2 pos, double ext, SDL_Color color) {
 }
 
 static const uint8_t fontmap[GLYPH_COUNT]
-    = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_abcdefghijklmnopqrstuvwxyz{|}~";
+    = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
 
 double text_width(double fs, const char* text) {
     double res = 0.0;

@@ -5,6 +5,7 @@
 #include "draw.h"
 #include "fmt.h"
 #include "game.h"
+#include "menu.h"
 #include "sdl.h"
 #include "verlet.h"
 
@@ -26,7 +27,7 @@
 #define BACKGROUND_BASE RGB(0, 0, 0)
 #define BACKGROUND_DEAD RGB(127, 15, 15)
 
-static uint64_t score = 0;
+uint64_t score = 0, hiscore = 0;
 
 typedef struct {
     VerletBody *segs, *start;
@@ -47,7 +48,7 @@ typedef struct {
 static Monke monke = {0};
 static Anchor* anchors = NULL;
 
-static double death_timer = 0.0;
+static double death_timer = DEATH_SECS;
 
 static void tick_timer(double* rem) {
     *rem -= timestep();
@@ -129,6 +130,10 @@ static void generate_anchors() {
     }
 }
 
+static void sync_camera_with_monke() {
+    set_camera_target(XY(monke.body.pos.x - w_width() / 4, 0.0));
+}
+
 void restart() {
     score = 0;
 
@@ -139,6 +144,7 @@ void restart() {
     anchors = MakeTinyD(Anchor);
 
     generate_anchors();
+    sync_camera_with_monke();
 }
 
 static void score_anchors() {
@@ -273,8 +279,12 @@ void update() {
     else
         death_timer = DEATH_SECS;
 
-    if (death_timer == 0.0)
-        restart();
+    if (death_timer == 0.0) {
+        void maybe_save_hi();
+        if (score)
+            maybe_save_hi();
+        pop_menu();
+    }
 }
 
 static void draw_rope(Rope rope) {
@@ -282,11 +292,9 @@ static void draw_rope(Rope rope) {
         fill_square(rope.segs[i].pos, 3.0, RGB(255, 255, 255));
 }
 
-void draw() {
+void draw_game() {
     clear_screen(lerp_color(BACKGROUND_BASE, BACKGROUND_DEAD, 1.0 - death_timer / DEATH_SECS));
-
-    set_camera_target(XY(monke.body.pos.x - w_width() / 4, 0.0));
-    update_camera();
+    sync_camera_with_monke();
 
     draw_rope(monke.rope);
 

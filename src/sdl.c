@@ -13,6 +13,7 @@
 #include "cmake.h"
 #include "draw.h"
 #include "game.h"
+#include "menu.h"
 #include "sdl.h"
 
 #define SWIPE_THRESHOLD (0.08)
@@ -29,29 +30,28 @@ static SDL_AppResult SDL_Fail() {
 SDL_AppResult SDL_AppInit(void** ctx, int argc, char* argv[]) {
     (void)ctx, (void)argc, (void)argv;
 
-    SDL_SetAppMetadata(GAME_NAME, GAME_VERSION, GAME_PACKAGE);
+    SDL_SetAppMetadata(GAME_TITLE, GAME_VERSION, GAME_PACKAGE);
 
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
         return SDL_Fail();
 
-    if (!SDL_CreateWindowAndRenderer(
-            GAME_NAME, 800, 600, SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED, &window, &renderer))
-    {
+    static const uint32_t wf = SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED;
+    if (!SDL_CreateWindowAndRenderer(GAME_TITLE, 800, 600, wf, &window, &renderer))
         return SDL_Fail();
-    }
 
     if (!sdl_load_font())
         return SDL_Fail();
 
     SDL_SetRenderVSync(renderer, SDL_RENDERER_VSYNC_ADAPTIVE);
-    SDL_ShowWindow(window);
 
-    restart();
+    push_menu(MEN_MAIN);
+
+    SDL_ShowWindow(window);
 
     return SDL_APP_CONTINUE;
 }
 
-static bool left_press = false, right_press = false;
+bool left_press = false, right_press = false, tap = false;
 
 bool is_left_pressed() {
     return left_press;
@@ -59,6 +59,10 @@ bool is_left_pressed() {
 
 bool is_right_pressed() {
     return right_press;
+}
+
+bool just_tapped() {
+    return tap;
 }
 
 SDL_AppResult SDL_AppEvent(void* ctx, SDL_Event* event) {
@@ -82,6 +86,8 @@ SDL_AppResult SDL_AppEvent(void* ctx, SDL_Event* event) {
         break;
 
     case SDL_EVENT_FINGER_UP:
+        tap = true;
+
         if (event->tfinger.fingerID == grapple_finger)
             left_press = false;
 
@@ -100,6 +106,8 @@ SDL_AppResult SDL_AppEvent(void* ctx, SDL_Event* event) {
         break;
 
     case SDL_EVENT_MOUSE_BUTTON_UP:
+        tap = true;
+
         if (event->button.which == SDL_TOUCH_MOUSEID)
             break;
 
@@ -140,39 +148,28 @@ SDL_AppResult SDL_AppEvent(void* ctx, SDL_Event* event) {
     return SDL_APP_CONTINUE;
 }
 
-#define TICKRATE (60)
 #define NANOSEC (1000000000.0)
-
-static uint64_t then = 0, now = 0;
+static uint64_t then = 0;
 static double dt = 0.0;
-
-double timestep() {
-    return 1.0 / TICKRATE;
-}
 
 double delta() {
     return dt;
 }
 
+bool PERMADEATH = false;
+
 SDL_AppResult SDL_AppIterate(void* ctx) {
     (void)ctx;
 
-    static double ticks = 0.0;
-    now = SDL_GetTicksNS();
+    if (PERMADEATH)
+        return SDL_APP_SUCCESS;
 
+    const uint64_t now = SDL_GetTicksNS();
     dt = (double)(now - then) / NANOSEC;
-
-    if (then)
-        ticks += (double)(now - then) / (NANOSEC / TICKRATE);
-
     then = now;
 
-    for (; ticks >= 1.0; ticks -= 1.0) {
-        update();
-        right_press = false;
-    }
-
-    draw();
+    tick_menu();
+    tap = false;
 
     SDL_RenderPresent(renderer);
 
@@ -201,4 +198,8 @@ int w_height() {
     int h = 0;
     SDL_GetWindowSize(window, NULL, &h);
     return h;
+}
+
+SDL_Storage* open_user_storage() {
+    return SDL_OpenUserStorage("nonk", GAME_CODENAME, 0);
 }

@@ -2,4 +2,4 @@
 
 #include <SDL3/SDL_stdinc.h>
 
-void restart(), update(), draw();
+void restart(), update(), draw_game();
