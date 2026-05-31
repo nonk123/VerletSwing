@@ -322,5 +322,5 @@ void draw_game() {
     s = fmt("SCORE: %llu", score);
     const bool exclaim = cur_menu() == MEN_GAME && hiscore && score >= hiscore;
     const char* cool = fmt("%s%s", s, exclaim ? "!" : "");
-    draw_text(XY(0.5 * (w_width() - text_width(fs, s)), pad), fs, cool);
+    draw_text(XY(0.5 * (w_width() - text_width(fs, s)), w_height() - fs - pad), fs, cool);
 }
