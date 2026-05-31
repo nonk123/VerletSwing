@@ -15,10 +15,13 @@ bool chicken_dinner = false;
 static void tick_main() {
     static bool tainted = false;
 
+    if (tainted)
+        draw_game();
+    else
+        clear_screen(BACKGROUND_BASE);
+
     static const double fs = 48.0, hfs = 0.5 * fs;
     const double y = 0.5 * (w_height() - fs);
-
-    draw_game();
 
     const char* s = fmt("Tap to %s", tainted ? "Restart" : "Start");
     draw_text(XY(CENTER(fs, s), y - 0.5 * fs), fs, s);

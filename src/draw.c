@@ -16,8 +16,6 @@
 #define CAM_SPEED (10240.0)
 #define CAM_MAX_DELAY (0.5)
 
-#define WHITE RGB(255, 255, 255)
-
 static Vec2 cam_offset = XY(0.0, 0.0), cam_target = XY(0.0, 0.0);
 
 Vec2 camera_pos() {

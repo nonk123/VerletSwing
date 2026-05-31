@@ -6,6 +6,11 @@
 
 #define RGB(_r, _g, _b) ((SDL_Color){.r = (_r), .g = (_g), .b = (_b), .a = SDL_ALPHA_OPAQUE})
 
+#define WHITE RGB(255, 255, 255)
+
+#define BACKGROUND_BASE RGB(0, 0, 0)
+#define BACKGROUND_DEAD RGB(127, 15, 15)
+
 Vec2 camera_pos();
 void set_camera_target(Vec2);
 void update_camera();

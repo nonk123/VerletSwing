@@ -24,9 +24,6 @@
 
 #define DEATH_SECS (1.4)
 
-#define BACKGROUND_BASE RGB(0, 0, 0)
-#define BACKGROUND_DEAD RGB(127, 15, 15)
-
 uint64_t score = 0, hiscore = 0;
 
 typedef struct {
