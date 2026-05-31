@@ -100,8 +100,6 @@ void tick_menu() {
 
     if (last->tick)
         last->tick();
-
-    update_camera();
 }
 
 extern uint64_t score, hiscore;

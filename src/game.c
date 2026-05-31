@@ -294,7 +294,9 @@ static void draw_rope(Rope rope) {
 
 void draw_game() {
     clear_screen(lerp_color(BACKGROUND_BASE, BACKGROUND_DEAD, 1.0 - death_timer / DEATH_SECS));
+
     sync_camera_with_monke();
+    update_camera();
 
     draw_rope(monke.rope);
 
