@@ -13,6 +13,8 @@
 #define SLIVER (4.0)
 #define MAX_HOOK_DISTANCE (360.0)
 
+#define STRAT_THRESHOLD (8.0)
+
 #define ANCHOR_STEP (0.7 * MAX_HOOK_DISTANCE)
 #define CULL_RADIUS (2.0 * w_width())
 #define FIRST_ANCHOR_X (ANCHOR_STEP)
@@ -61,7 +63,7 @@ static void nuke_rope(Rope* this) {
 }
 
 static void init_monke(Monke* this) {
-    Vec2 pos = Vscale(XY(0.0, -24.0), 0.5);
+    Vec2 pos = Vscale(XY(0.0, -STRAT_THRESHOLD), 0.5);
     init_verlet(&this->body, pos);
 
     nuke_rope(&monke.rope);
@@ -309,7 +311,7 @@ void draw_game() {
     const double fs = 48.0, pad = 8.0;
     const char* s = NULL;
 
-    if (monke.body.pos.y < 0.0) {
+    if (monke.body.pos.y < -STRAT_THRESHOLD) {
         s = fmt("%d", (int)-monke.body.pos.y);
         draw_text(XY(monke.body.pos.x - camera_pos().x - 0.5 * text_width(fs, s), pad), fs, s);
     }
