@@ -4,6 +4,7 @@ project(VerletSwing
     VERSION 0.1.0
     DESCRIPTION "Verlet Swing"
     LANGUAGES C)
+set(PROJECT_BUNDLE "dev.nonk.games.verlet") # not a standard variable but whatever
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)

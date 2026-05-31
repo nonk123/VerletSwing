@@ -29,6 +29,8 @@ static SDL_AppResult SDL_Fail() {
 SDL_AppResult SDL_AppInit(void** ctx, int argc, char* argv[]) {
     (void)ctx, (void)argc, (void)argv;
 
+    SDL_SetAppMetadata(GAME_NAME, GAME_VERSION, GAME_PACKAGE);
+
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
         return SDL_Fail();
 
