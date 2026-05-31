@@ -309,6 +309,11 @@ void draw_game() {
     const double fs = 48.0, pad = 8.0;
     const char* s = NULL;
 
+    if (monke.body.pos.y < 0.0) {
+        s = fmt("%d", (int)-monke.body.pos.y);
+        draw_text(XY(monke.body.pos.x - camera_pos().x - 0.5 * text_width(fs, s), pad), fs, s);
+    }
+
 #if DEBUG
     s = fmt("A%zu", TinyDLength(anchors));
     draw_text(XY(w_width() - text_width(fs, s) - pad, pad), fs, s);
