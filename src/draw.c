@@ -18,13 +18,6 @@
 
 #define WHITE RGB(255, 255, 255)
 
-SDL_Color lerp_color(SDL_Color from, SDL_Color to, double f) {
-    from.r = (uint8_t)((double)from.r + (double)(to.r - from.r) * f);
-    from.g = (uint8_t)((double)from.g + (double)(to.g - from.g) * f);
-    from.b = (uint8_t)((double)from.b + (double)(to.b - from.b) * f);
-    return from;
-}
-
 static Vec2 cam_offset = XY(0.0, 0.0), cam_target = XY(0.0, 0.0);
 
 Vec2 camera_pos() {
