@@ -11,7 +11,6 @@
 #include <S_tructures.h>
 
 #include "cmake.h"
-#include "draw.h"
 #include "fmt.h"
 #include "game.h"
 #include "menu.h"
