@@ -16,9 +16,6 @@
 #define CULL_RADIUS (2.0 * w_width())
 #define FIRST_ANCHOR_X (ANCHOR_STEP)
 
-#define RELEASE_BOOST_COOLDOWN (1.5)
-#define RELEASE_BOOST (256.0)
-
 #define DASH_COOLDOWN (1.5)
 #define DASH_BOOST (256.0)
 
@@ -37,7 +34,7 @@ typedef struct {
 typedef struct {
     VerletBody body;
     Rope rope;
-    double boost_cooldown, dash_cooldown;
+    double dash_cooldown;
 } Monke;
 
 typedef struct {
@@ -68,7 +65,6 @@ static void init_monke(Monke* this) {
 
     nuke_rope(&monke.rope);
 
-    this->boost_cooldown = 0.0;
     this->dash_cooldown = 0.0;
 }
 
@@ -184,16 +180,8 @@ static int closest_anchor() {
 }
 
 static void maybe_manifest_rope() {
-    tick_timer(&monke.boost_cooldown);
-
-    if (!left_press) {
-        if (monke.rope.segs && monke.boost_cooldown == 0.0) {
-            push(&monke.body, XY(0.0, -RELEASE_BOOST));
-            monke.boost_cooldown = RELEASE_BOOST_COOLDOWN;
-        }
-
+    if (!left_press)
         nuke_rope(&monke.rope);
-    }
 
     if (!left_press || monke.rope.segs)
         return;
