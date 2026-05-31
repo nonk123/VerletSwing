@@ -252,7 +252,7 @@ void update() {
     tick_timer(&monke.dash_cooldown);
 
     if (right_press && monke.dash_cooldown == 0.0) {
-        const Vec2 dash = XY(DASH_BOOST, 0.0);
+        const Vec2 dir = Vnorm(Vsub(monke.body.pos, monke.body.old_pos)), dash = Vscale(dir, DASH_BOOST);
 
         for (size_t i = 0; i <= TinyDLength(monke.rope.segs); i++)
             push(i ? &monke.rope.segs[i - 1] : &monke.body, dash);
