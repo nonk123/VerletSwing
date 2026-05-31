@@ -1,4 +1,5 @@
 #define SDL_MAIN_USE_CALLBACKS
+#include <SDL3/SDL_hints.h>
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_log.h>
 #include <SDL3/SDL_main.h>
@@ -33,6 +34,8 @@ SDL_AppResult SDL_AppInit(void** ctx, int argc, char* argv[]) {
     (void)ctx, (void)argc, (void)argv;
 
     SDL_SetAppMetadata(GAME_TITLE, GAME_VERSION, GAME_PACKAGE);
+
+    SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
 
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
         return SDL_Fail();
