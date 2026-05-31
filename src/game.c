@@ -136,6 +136,7 @@ static void sync_camera_with_monke() {
 
 void restart() {
     score = 0;
+    chicken_dinner = false;
 
     init_monke(&monke);
     monke.body.f_gravity = true;
@@ -185,7 +186,7 @@ static int closest_anchor() {
 static void maybe_manifest_rope() {
     tick_timer(&monke.boost_cooldown);
 
-    if (!is_left_pressed()) {
+    if (!left_press) {
         if (monke.rope.segs && monke.boost_cooldown == 0.0) {
             push(&monke.body, XY(0.0, -RELEASE_BOOST));
             monke.boost_cooldown = RELEASE_BOOST_COOLDOWN;
@@ -194,7 +195,7 @@ static void maybe_manifest_rope() {
         nuke_rope(&monke.rope);
     }
 
-    if (!is_left_pressed() || monke.rope.segs)
+    if (!left_press || monke.rope.segs)
         return;
 
     const int closest = closest_anchor();
@@ -262,7 +263,7 @@ void update() {
 
     tick_timer(&monke.dash_cooldown);
 
-    if (is_right_pressed() && monke.dash_cooldown == 0.0) {
+    if (right_press && monke.dash_cooldown == 0.0) {
         const Vec2 dash = XY(DASH_BOOST, 0.0);
 
         for (size_t i = 0; i <= TinyDLength(monke.rope.segs); i++)
@@ -280,9 +281,7 @@ void update() {
         death_timer = DEATH_SECS;
 
     if (death_timer == 0.0) {
-        void maybe_save_hi();
-        if (score)
-            maybe_save_hi();
+        maybe_save_hi();
         pop_menu();
     }
 }
@@ -318,5 +317,7 @@ void draw_game() {
 #endif
 
     s = fmt("SCORE: %llu", score);
-    draw_text(XY(0.5 * (w_width() - text_width(fs, s)), pad), fs, s);
+    const bool exclaim = cur_menu() == MEN_GAME && hiscore && score >= hiscore;
+    const char* cool = fmt("%s%s", s, exclaim ? "!" : "");
+    draw_text(XY(0.5 * (w_width() - text_width(fs, s)), pad), fs, cool);
 }

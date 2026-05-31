@@ -8,33 +8,35 @@
 #include "vec2.h"
 
 #define TICKRATE (60)
+#define CENTER(fs, s) (0.5 * (w_width() - text_width((fs), (s))))
 
-typedef struct {
-    void (*tick)();
-    Menu self_id;
-} MenuStack;
+bool chicken_dinner = false;
 
 static void tick_main() {
     static bool tainted = false;
 
+    static const double fs = 48.0, hfs = 0.5 * fs;
+    const double y = 0.5 * (w_height() - fs);
+
     draw_game();
 
-    const double fs = 48.0;
     const char* s = fmt("Tap to %s", tainted ? "Restart" : "Start");
-    draw_text(XY(0.5 * (w_width() - text_width(fs, s)), 0.5 * (w_height() - fs)), fs, s);
+    draw_text(XY(CENTER(fs, s), y - 0.5 * fs), fs, s);
 
-    if (just_tapped()) {
+    s = fmt("High-score: %llu", hiscore);
+    draw_text(XY(CENTER(fs, s), y + 1.0 * fs), fs, s);
+
+    if (chicken_dinner) {
+        s = "NEW RECORD!";
+        draw_text(XY(CENTER(hfs, s), y + 2.0 * fs), hfs, s);
+    }
+
+    if (tap) {
         tainted = true;
         restart();
         push_menu(MEN_GAME);
     }
 }
-
-double timestep() {
-    return cur_menu() == MEN_GAME ? 1.0 / TICKRATE : 0.0;
-}
-
-extern bool left_press, right_press;
 
 static void tick_game() {
     static double ticks = 0.0;
@@ -51,6 +53,11 @@ static void tick_game() {
     draw_game();
 }
 
+typedef struct {
+    void (*tick)();
+    Menu self_id;
+} MenuStack;
+
 static MenuStack* stack = NULL;
 static MenuStack templates[MEN_MAX] = {
     [MEN_MAIN] = {tick_main},
@@ -60,6 +67,10 @@ static MenuStack templates[MEN_MAX] = {
 static void fucking_die() {
     extern bool PERMADEATH;
     PERMADEATH = true;
+}
+
+double timestep() {
+    return cur_menu() == MEN_GAME ? 1.0 / TICKRATE : 0.0;
 }
 
 Menu cur_menu() {
@@ -100,31 +111,4 @@ void tick_menu() {
 
     if (last->tick)
         last->tick();
-}
-
-extern uint64_t score, hiscore;
-
-void load_hi() {
-    SDL_Storage* store = open_user_storage();
-
-    if (!store)
-        return;
-
-    // TODO: implement.
-
-    SDL_CloseStorage(store);
-}
-
-void maybe_save_hi() {
-    if (score < hiscore)
-        return;
-
-    SDL_Storage* store = open_user_storage();
-
-    if (!store)
-        return;
-
-    // TODO: implement.
-
-    SDL_CloseStorage(store);
 }

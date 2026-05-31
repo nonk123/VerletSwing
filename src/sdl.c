@@ -12,6 +12,7 @@
 
 #include "cmake.h"
 #include "draw.h"
+#include "fmt.h"
 #include "game.h"
 #include "menu.h"
 #include "sdl.h"
@@ -21,6 +22,8 @@
 
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
+
+bool left_press = false, right_press = false, tap = false;
 
 static SDL_AppResult SDL_Fail() {
     SDL_LogError(SDL_LOG_CATEGORY_CUSTOM, "%s", SDL_GetError());
@@ -44,25 +47,12 @@ SDL_AppResult SDL_AppInit(void** ctx, int argc, char* argv[]) {
 
     SDL_SetRenderVSync(renderer, SDL_RENDERER_VSYNC_ADAPTIVE);
 
+    load_hi();
     push_menu(MEN_MAIN);
 
     SDL_ShowWindow(window);
 
     return SDL_APP_CONTINUE;
-}
-
-bool left_press = false, right_press = false, tap = false;
-
-bool is_left_pressed() {
-    return left_press;
-}
-
-bool is_right_pressed() {
-    return right_press;
-}
-
-bool just_tapped() {
-    return tap;
 }
 
 SDL_AppResult SDL_AppEvent(void* ctx, SDL_Event* event) {
@@ -202,4 +192,41 @@ int w_height() {
 
 SDL_Storage* open_user_storage() {
     return SDL_OpenUserStorage("nonk", GAME_CODENAME, 0);
+}
+
+void load_hi() {
+    SDL_Storage* store = open_user_storage();
+
+    if (!store)
+        return;
+
+    static char buf[32] = {0};
+
+    uint64_t len = 0;
+    const bool ok = SDL_GetStorageFileSize(store, "hi", &len);
+
+    if (ok && len && len < sizeof(buf)) {
+        SDL_ReadStorageFile(store, "hi", buf, len);
+        hiscore = SDL_strtoull(buf, NULL, 10);
+    }
+
+    SDL_CloseStorage(store);
+}
+
+void maybe_save_hi() {
+    if (score < hiscore)
+        return;
+
+    hiscore = score;
+    chicken_dinner = true;
+
+    SDL_Storage* store = open_user_storage();
+
+    if (!store)
+        return;
+
+    const char* s = fmt("%llu", hiscore);
+    SDL_WriteStorageFile(store, "hi", s, SDL_strlen(s));
+
+    SDL_CloseStorage(store);
 }

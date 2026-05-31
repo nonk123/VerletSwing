@@ -12,3 +12,5 @@ typedef enum {
 Menu cur_menu();
 void push_menu(Menu), pop_menu();
 void tick_menu();
+
+extern bool chicken_dinner;

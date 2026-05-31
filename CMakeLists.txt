@@ -19,6 +19,7 @@ set(BUILD_SHARED_LIBS OFF)
 include(FetchContent)
 set(FETCHCONTENT_QUIET FALSE)
 
+set(SDL_EMSCRIPTEN_PERSISTENT_PATH /storage CACHE INTERNAL "")
 set(SDL_SHARED OFF CACHE INTERNAL "")
 set(SDL_STATIC ON CACHE INTERNAL "")
 set(SDL_TEST_LIBRARY OFF CACHE INTERNAL "")
@@ -69,5 +70,6 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     DEBUG=${DEBUG})
 
 if(EMSCRIPTEN)
-    target_link_options(${PROJECT_NAME} PRIVATE --preload-file ${CMAKE_SOURCE_DIR}/assets@assets)
+    target_link_options(${PROJECT_NAME} PRIVATE
+        --preload-file ${CMAKE_SOURCE_DIR}/assets@assets)
 endif()
