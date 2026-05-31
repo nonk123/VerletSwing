@@ -8,6 +8,10 @@ double lerpin(double a, double b, double t) {
     return lerp(a, b, t * t);
 }
 
+double lerpin3(double a, double b, double t) {
+    return lerp(a, b, t * t * t);
+}
+
 double lerpout(double a, double b, double t) {
     return lerp(a, b, t * (2.0 - t));
 }

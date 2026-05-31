@@ -300,7 +300,7 @@ void draw_game() {
     const Vec2 vel = Vsub(monke.body.pos, monke.body.old_pos);
     const Vec2 scale = XY(1.0 - monke.dash_cooldown / DASH_COOLDOWN, 1.0);
 
-    player_color.a = (uint8_t)lerpin(0.0, 255.0, 1.0 - monke.dash_cooldown / DASH_COOLDOWN);
+    player_color.a = (uint8_t)lerpin3(0.0, 255.0, 1.0 - monke.dash_cooldown / DASH_COOLDOWN);
     draw_texture("velvec.png", monke.body.pos, scale, SDL_atan2(vel.y, vel.x), player_color);
     player_color.a = 255;
 
