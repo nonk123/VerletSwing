@@ -8,14 +8,13 @@
 
 SDL_Color lerp_color(SDL_Color, SDL_Color, double);
 
-bool sdl_load_font();
-
 Vec2 camera_pos();
 void set_camera_target(Vec2);
 void update_camera();
 
 void clear_screen(SDL_Color);
 void fill_square(Vec2, double, SDL_Color);
+void draw_texture(const char*, Vec2, Vec2, double, SDL_Color);
 
 double text_width(double, const char*);
 void draw_text(Vec2, double, const char*);

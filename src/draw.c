@@ -1,5 +1,6 @@
 #include <SDL3/SDL_render.h>
 
+#include "assets.h"
 #include "draw.h"
 #include "sdl.h"
 #include "vec2.h"
@@ -14,6 +15,8 @@
 
 #define CAM_SPEED (10240.0)
 #define CAM_MAX_DELAY (0.5)
+
+#define WHITE RGB(255, 255, 255)
 
 SDL_Color lerp_color(SDL_Color from, SDL_Color to, double f) {
     from.r = (uint8_t)((double)from.r + (double)(to.r - from.r) * f);
@@ -39,27 +42,7 @@ void update_camera() {
     cam_offset = Vadd(cam_offset, Vscale(dir, vel));
 }
 
-static SDL_Texture* fontsheet = NULL;
 extern SDL_Renderer* renderer;
-
-bool sdl_load_font() {
-    SDL_Surface* surf = SDL_LoadPNG(ASSETS "monogram-bitmap.png");
-
-    if (!surf)
-        return false;
-
-    fontsheet = SDL_CreateTextureFromSurface(renderer, surf);
-
-    if (!fontsheet) {
-        SDL_DestroySurface(surf);
-        return false;
-    }
-
-    SDL_SetTextureScaleMode(fontsheet, SDL_SCALEMODE_NEAREST);
-    SDL_DestroySurface(surf);
-
-    return true;
-}
 
 void clear_screen(SDL_Color color) {
     SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, SDL_ALPHA_OPAQUE);
@@ -78,6 +61,25 @@ void fill_square(Vec2 pos, double ext, SDL_Color color) {
     SDL_RenderFillRect(renderer, &rect);
 }
 
+void draw_texture(const char* name, Vec2 pos, Vec2 scale, double angle, SDL_Color tint) {
+    SDL_Texture* tex = gettex(name);
+
+    const SDL_FRect dst = {
+        .x = (float)pos.x - (float)cam_offset.x - 0.5f * (float)tex->w * (float)scale.x,
+        .y = (float)pos.y - (float)cam_offset.y - 0.5f * (float)tex->h * (float)scale.y,
+        .w = (float)tex->w * (float)scale.x,
+        .h = (float)tex->h * (float)scale.y,
+    };
+
+    SDL_SetTextureColorMod(tex, tint.r, tint.g, tint.b);
+    SDL_SetTextureAlphaMod(tex, tint.a);
+
+    SDL_RenderTextureRotated(renderer, tex, NULL, &dst, angle * 180.0 / SDL_PI_D, NULL, SDL_FLIP_NONE);
+
+    SDL_SetTextureColorMod(tex, 255, 255, 255);
+    SDL_SetTextureAlphaMod(tex, 255);
+}
+
 static const uint8_t fontmap[GLYPH_COUNT]
     = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
 
@@ -92,7 +94,7 @@ double text_width(double fs, const char* text) {
 
 void draw_text(Vec2 pos, double fs, const char* text) {
     uint32_t c = 0;
-    float x = 0;
+    SDL_Texture* tex = gettex("monogram-bitmap.png");
 
     while ((c = SDL_StepUTF8(&text, NULL))) {
         if (c < 32 || c >= GLYPH_COUNT)
@@ -112,13 +114,17 @@ void draw_text(Vec2 pos, double fs, const char* text) {
         };
 
         const SDL_FRect dst = {
-            .x = (float)pos.x + x * (float)text_width(fs, " "),
+            .x = (float)pos.x,
             .y = (float)pos.y,
             .w = (float)text_width(fs, " "),
             .h = (float)fs,
         };
 
-        SDL_RenderTexture(renderer, fontsheet, &src, &dst);
-        x += 1.f;
+        SDL_SetTextureColorMod(tex, 255, 255, 255);
+        SDL_SetTextureAlphaMod(tex, 255);
+
+        SDL_RenderTexture(renderer, tex, &src, &dst);
+
+        pos.x += text_width(fs, " ");
     }
 }

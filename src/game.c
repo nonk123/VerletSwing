@@ -16,8 +16,8 @@
 #define CULL_RADIUS (2.0 * w_width())
 #define FIRST_ANCHOR_X (ANCHOR_STEP)
 
-#define DASH_COOLDOWN (1.5)
-#define DASH_BOOST (256.0)
+#define DASH_COOLDOWN (5.5)
+#define DASH_BOOST (512.0)
 
 #define DEATH_SECS (1.4)
 
@@ -294,7 +294,16 @@ void draw_game() {
         fill_square(anchors[i].pos, 16.0, col);
     }
 
-    fill_square(monke.body.pos, 16.0, RGB(255, 0, 0));
+    SDL_Color player_color = RGB(255, 0, 0);
+
+    const Vec2 vel = Vsub(monke.body.pos, monke.body.old_pos);
+    const Vec2 scale = XY(1.0 - monke.dash_cooldown / DASH_COOLDOWN, 1.0);
+
+    player_color.a = (uint8_t)(255.0 * (1.0 - monke.dash_cooldown / DASH_COOLDOWN));
+    draw_texture("velvec.png", monke.body.pos, scale, SDL_atan2(vel.y, vel.x), player_color);
+    player_color.a = 255;
+
+    fill_square(monke.body.pos, 16.0, player_color);
 
     const double fs = 48.0, pad = 8.0;
     const char* s = NULL;

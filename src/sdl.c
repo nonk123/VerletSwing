@@ -42,10 +42,8 @@ SDL_AppResult SDL_AppInit(void** ctx, int argc, char* argv[]) {
     if (!SDL_CreateWindowAndRenderer(GAME_TITLE, 800, 600, wf, &window, &renderer))
         return SDL_Fail();
 
-    if (!sdl_load_font())
-        return SDL_Fail();
-
     SDL_SetRenderVSync(renderer, SDL_RENDERER_VSYNC_ADAPTIVE);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
     load_hi();
     push_menu(MEN_MAIN);
