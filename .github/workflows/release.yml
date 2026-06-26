@@ -62,7 +62,7 @@ jobs:
           actions-cache-folder: ${{ env.EMSDK_CACHE_DIR }}
 
       - name: Cache build dir
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: ${{ env.BUILDDIR }}
           key: ${{ env.EMSDK_VERSION }}-${{ github.ref_name }}-${{ hashFiles('CMakeLists.txt') }}
