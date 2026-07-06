@@ -29,9 +29,7 @@ jobs:
       id-token: write
 
     env:
-      EMSDK_CACHE_DIR: emsdk
-      EMSDK_VERSION: 5.0.7
-
+      CACHE_BUST: 0
       BUILDDIR: build
       OUTDIR: dist
 
@@ -58,17 +56,17 @@ jobs:
       - name: Install Emscripten SDK
         uses: emscripten-core/setup-emsdk@v16
         with:
-          version: ${{ env.EMSDK_VERSION }}
-          actions-cache-folder: ${{ env.EMSDK_CACHE_DIR }}
+          version: latest
+          actions-cache-folder: emsdk
 
       - name: Cache build dir
         uses: actions/cache@v6
         with:
           path: ${{ env.BUILDDIR }}
-          key: ${{ env.EMSDK_VERSION }}-${{ github.ref_name }}-${{ hashFiles('CMakeLists.txt') }}
+          key: ${{ env.CACHE_BUST }}-${{ github.ref_name }}-${{ hashFiles('CMakeLists.txt') }}
           restore-keys: |
-            ${{ env.EMSDK_VERSION }}-${{ github.ref_name }}-
-            ${{ env.EMSDK_VERSION }}-
+            ${{ env.CACHE_BUST }}-${{ github.ref_name }}-
+            ${{ env.CACHE_BUST }}-
 
       - name: Configure
         run: emcmake cmake -G Ninja -S . -B ${{ env.BUILDDIR }} -D CMAKE_BUILD_TYPE=Release
@@ -80,7 +78,7 @@ jobs:
           rm -rf ${{ env.OUTDIR }}; mkdir -p ${{ env.OUTDIR }}
           cp ${{ env.BUILDDIR }}/VerletSwing.{js,wasm,data} ${{ env.OUTDIR }}
           cp ${{ env.BUILDDIR }}/VerletSwing.html ${{ env.OUTDIR }}/index.html
-        # TODO: maybe use a custom ^ index.html harness?
+        # TODO: maybe use a custom ^ index.html harness with sanity?
 
       - name: Setup Pages
         uses: actions/configure-pages@v6
