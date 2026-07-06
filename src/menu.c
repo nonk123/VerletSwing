@@ -11,6 +11,7 @@
 #define CENTER(fs, s) (0.5 * (w_width() - text_width((fs), (s))))
 
 bool chicken_dinner = false;
+static bool popped_this_frame = false;
 
 static void tick_main() {
     static bool tainted = false;
@@ -53,6 +54,8 @@ static void tick_game() {
         right_press = false;
     }
 
+    popped_this_frame = false;
+
     draw_game();
 }
 
@@ -85,6 +88,11 @@ void after_menu_changed() {
 }
 
 void pop_menu() {
+    // HACK: prevents multiple ticks popping the stack within a single frame which results in chaos.
+    if (popped_this_frame)
+        return;
+    popped_this_frame = true;
+
     if (TinyDLength(stack))
         stack = TinyDPopBack(stack);
 

@@ -180,13 +180,13 @@ void SDL_AppQuit(void* ctx, SDL_AppResult result) {
 
 int w_width() {
     int w = 0;
-    SDL_GetWindowSize(window, &w, NULL);
+    SDL_GetWindowSizeInPixels(window, &w, NULL);
     return w;
 }
 
 int w_height() {
     int h = 0;
-    SDL_GetWindowSize(window, NULL, &h);
+    SDL_GetWindowSizeInPixels(window, NULL, &h);
     return h;
 }
 
