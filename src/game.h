@@ -2,7 +2,7 @@
 
 #include <SDL3/SDL_stdinc.h>
 
-extern uint64_t score, hiscore;
-extern bool chicken_dinner;
+#define TICKRATE (60)
 
-void restart(), update(), draw_game();
+extern uint64_t score;
+void restart(), update_game();

@@ -1,4 +1,4 @@
-#include "sdl.h"
+#include "screen.h"
 #include "verlet.h"
 
 #define MAX_VEL (176.0)

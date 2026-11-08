@@ -11,10 +11,12 @@
 #define S_TRUCTURES_IMPLEMENTATION
 #include <S_tructures.h>
 
+#include <NutBlast.h>
+
 #include "cmake.h"
 #include "fmt.h"
-#include "game.h"
-#include "menu.h"
+#include "net.h"
+#include "screen.h"
 #include "sdl.h"
 
 #define SWIPE_THRESHOLD (0.08)
@@ -33,24 +35,28 @@ static SDL_AppResult SDL_Fail() {
 SDL_AppResult SDL_AppInit(void** ctx, int argc, char* argv[]) {
     (void)ctx, (void)argc, (void)argv;
 
-    SDL_SetAppMetadata(GAME_TITLE, GAME_VERSION, GAME_PACKAGE);
+    NutBlast_Init((NutBlast_InitOptions){
+        .game_id = GAME_TITLE " " GAME_VERSION,
+        .max_channels = CHAN_MAX,
+    });
 
+    SDL_SetAppMetadata(GAME_TITLE, GAME_VERSION, GAME_PACKAGE);
     SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
 
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
         return SDL_Fail();
 
-    static const uint32_t wf = SDL_WINDOW_RESIZABLE | SDL_WINDOW_MAXIMIZED;
-    if (!SDL_CreateWindowAndRenderer(GAME_TITLE, 800, 600, wf, &window, &renderer))
+    if (!SDL_CreateWindowAndRenderer(GAME_TITLE, 800, 600, 0, &window, &renderer))
         return SDL_Fail();
+
+    const char* name = fmt("%04d", SDL_rand(10000));
+    NutBlast_SetPlayerField(NUTBLAST_FIELD_PLAYER_NAME, name);
+    SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "We are %s", name);
 
     SDL_SetRenderVSync(renderer, SDL_RENDERER_VSYNC_ADAPTIVE);
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
-    load_hi();
-    push_menu(MEN_MAIN);
-
-    SDL_ShowWindow(window);
+    goto_screen(SCR_JOIN);
 
     return SDL_APP_CONTINUE;
 }
@@ -120,9 +126,6 @@ SDL_AppResult SDL_AppEvent(void* ctx, SDL_Event* event) {
         if (event->key.key == SDLK_LSHIFT)
             right_press = true;
 
-        if (event->key.key == SDLK_R)
-            restart();
-
         break;
 
     case SDL_EVENT_KEY_UP:
@@ -151,6 +154,8 @@ bool PERMADEATH = false;
 SDL_AppResult SDL_AppIterate(void* ctx) {
     (void)ctx;
 
+    NutBlast_Update();
+
     if (PERMADEATH)
         return SDL_APP_SUCCESS;
 
@@ -158,8 +163,8 @@ SDL_AppResult SDL_AppIterate(void* ctx) {
     dt = (double)(now - then) / NANOSEC;
     then = now;
 
-    tick_menu();
-    tap = false;
+    update_screen();
+    NutBlast_Flush();
 
     SDL_RenderPresent(renderer);
 
@@ -176,6 +181,8 @@ void SDL_AppQuit(void* ctx, SDL_AppResult result) {
         SDL_DestroyWindow(window);
 
     SDL_Quit();
+
+    NutBlast_Cleanup();
 }
 
 int w_width() {
@@ -188,45 +195,4 @@ int w_height() {
     int h = 0;
     SDL_GetWindowSizeInPixels(window, NULL, &h);
     return h;
-}
-
-SDL_Storage* open_user_storage() {
-    return SDL_OpenUserStorage("nonk", GAME_CODENAME, 0);
-}
-
-void load_hi() {
-    SDL_Storage* store = open_user_storage();
-
-    if (!store)
-        return;
-
-    static char buf[32] = {0};
-
-    uint64_t len = 0;
-    const bool ok = SDL_GetStorageFileSize(store, "hi", &len);
-
-    if (ok && len && len < sizeof(buf)) {
-        SDL_ReadStorageFile(store, "hi", buf, len);
-        hiscore = SDL_strtoull(buf, NULL, 10);
-    }
-
-    SDL_CloseStorage(store);
-}
-
-void maybe_save_hi() {
-    if (score < hiscore)
-        return;
-
-    hiscore = score;
-    chicken_dinner = true;
-
-    SDL_Storage* store = open_user_storage();
-
-    if (!store)
-        return;
-
-    const char* s = fmt("%llu", hiscore);
-    SDL_WriteStorageFile(store, "hi", s, SDL_strlen(s));
-
-    SDL_CloseStorage(store);
 }

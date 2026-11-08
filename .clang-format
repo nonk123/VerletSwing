@@ -4,7 +4,7 @@ ContinuationIndentWidth: 4
 AccessModifierOffset: -2
 UseTab: Never
 AlignArrayOfStructures: Left
-AlignAfterOpenBracket: false
+AlignAfterOpenBracket: BlockIndent
 BreakBeforeBinaryOperators: All
 BreakBeforeBraces: Custom
 BreakAfterReturnType: Automatic
@@ -27,7 +27,9 @@ RemoveBracesLLVM: true
 InsertBraces: true
 IncludeBlocks: Regroup
 IncludeIsMainRegex: "a{999}" # no main includes
-SortIncludes: CaseSensitive
+SortIncludes:
+  Enabled: true
+  IgnoreCase: false
 IncludeCategories:
   - Regex: "^<std"
     Priority: 0
@@ -35,6 +37,8 @@ IncludeCategories:
     Priority: 10
   - Regex: "^<S_"
     Priority: 20
+  - Regex: "^<Nut"
+    Priority: 25
   - Regex: "^<"
     Priority: 15
   - Regex: '^".+/S_'

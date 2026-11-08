@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.27.0 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.28.0 FATAL_ERROR)
 
 project(VerletSwing
     VERSION 0.1.0
     DESCRIPTION "Verlet Swing"
-    LANGUAGES C)
+    LANGUAGES C CXX)
 set(PROJECT_BUNDLE "dev.nonk.games.verlet") # not a standard variable but whatever
 
 set(CMAKE_C_STANDARD 11)
@@ -39,12 +39,20 @@ FetchContent_MakeAvailable(SDL3)
 list(APPEND LIBS SDL3::SDL3-static)
 
 FetchContent_Declare(S_tructures
-    GIT_REPOSITORY https://github.com/Schwungus/S_tructures
+    GIT_REPOSITORY https://github.com/Schwungus/S_tructures.git
     GIT_TAG b867668c4b991bb2482d34a98416a3a106447544
     EXCLUDE_FROM_ALL)
 
 FetchContent_MakeAvailable(S_tructures)
 list(APPEND LIBS S_tructures)
+
+FetchContent_Declare(NutBlast
+    GIT_REPOSITORY https://github.com/Schwungus/NutBlast.git
+    GIT_TAG 8b986409ee3ccbc35239389e24a5505a34dc1db1
+    EXCLUDE_FROM_ALL)
+
+FetchContent_MakeAvailable(NutBlast)
+list(APPEND LIBS NutBlast)
 
 if(EMSCRIPTEN)
     set(CMAKE_EXECUTABLE_SUFFIX ".html")
@@ -71,5 +79,8 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 
 if(EMSCRIPTEN)
     target_link_options(${PROJECT_NAME} PRIVATE
-        --preload-file ${CMAKE_SOURCE_DIR}/assets@assets)
+        --preload-file ${CMAKE_SOURCE_DIR}/assets@assets
+        -sEXPORTED_RUNTIME_METHODS=HEAPF32,HEAPU32,HEAPU8
+        -sNO_DISABLE_EXCEPTION_CATCHING
+        -sASYNCIFY)
 endif()

@@ -2,11 +2,13 @@
 
 #include <S_tructures.h>
 
+#include "chat.h"
 #include "draw.h"
 #include "fmt.h"
 #include "game.h"
 #include "lerp.h"
-#include "menu.h"
+#include "net.h"
+#include "screen.h"
 #include "sdl.h"
 #include "verlet.h"
 
@@ -132,7 +134,6 @@ static void sync_camera_with_monke() {
 
 void restart() {
     score = 0;
-    chicken_dinner = false;
 
     init_monke(&monke);
     monke.body.f_gravity = true;
@@ -244,42 +245,12 @@ static void verlet_rope(Rope* rope) {
         constrain_rope(rope);
 }
 
-void update() {
-    generate_anchors();
-    score_anchors();
-    maybe_manifest_rope();
-
-    tick_timer(&monke.dash_cooldown);
-
-    if (right_press && monke.dash_cooldown == 0.0) {
-        const Vec2 dir = Vnorm(Vsub(monke.body.pos, monke.body.old_pos)), dash = Vscale(dir, DASH_BOOST);
-
-        for (size_t i = 0; i <= TinyDLength(monke.rope.segs); i++)
-            push(i ? &monke.rope.segs[i - 1] : &monke.body, dash);
-
-        monke.dash_cooldown = DASH_COOLDOWN;
-    }
-
-    verlet(&monke.body);
-    verlet_rope(&monke.rope);
-
-    if (monke.body.pos.y > w_height())
-        tick_timer(&death_timer);
-    else
-        death_timer = DEATH_SECS;
-
-    if (death_timer == 0.0) {
-        maybe_save_hi();
-        pop_menu();
-    }
-}
-
 static void draw_rope(Rope rope) {
     for (size_t i = 0; i < TinyDLength(rope.segs); i++)
         fill_square(rope.segs[i].pos, 3.0, RGB(255, 255, 255));
 }
 
-void draw_game() {
+static void draw_game() {
     clear_screen(lerp_color(BACKGROUND_BASE, BACKGROUND_DEAD, 1.0 - death_timer / DEATH_SECS));
 
     sync_camera_with_monke();
@@ -313,13 +284,62 @@ void draw_game() {
         draw_text(XY(monke.body.pos.x - camera_pos().x - 0.5 * text_width(fs, s), pad), fs, s);
     }
 
-#if DEBUG
+#if 0
     s = fmt("A%zu", TinyDLength(anchors));
     draw_text(XY(w_width() - text_width(fs, s) - pad, pad), fs, s);
 #endif
 
     s = fmt("SCORE: %llu", score);
-    const bool exclaim = cur_menu() == MEN_GAME && hiscore && score >= hiscore;
-    const char* cool = fmt("%s%s", s, exclaim ? "!" : "");
-    draw_text(XY(0.5 * (w_width() - text_width(fs, s)), w_height() - fs - pad), fs, cool);
+    draw_text(XY(0.5 * (w_width() - text_width(fs, s)), w_height() - fs - pad), fs, s);
+}
+
+static void tick() {
+    generate_anchors();
+    score_anchors();
+    maybe_manifest_rope();
+
+    tick_timer(&monke.dash_cooldown);
+
+    if (right_press && monke.dash_cooldown == 0.0) {
+        const Vec2 dir = Vnorm(Vsub(monke.body.pos, monke.body.old_pos)), dash = Vscale(dir, DASH_BOOST);
+
+        for (size_t i = 0; i <= TinyDLength(monke.rope.segs); i++)
+            push(i ? &monke.rope.segs[i - 1] : &monke.body, dash);
+
+        monke.dash_cooldown = DASH_COOLDOWN;
+    }
+
+    verlet(&monke.body);
+    verlet_rope(&monke.rope);
+
+    if (monke.body.pos.y > w_height())
+        tick_timer(&death_timer);
+    else
+        death_timer = DEATH_SECS;
+
+    if (death_timer == 0.0) {
+        restart();
+
+        const char* s = fmt("%s died!", NutBlast_GetPlayerField(NutBlast_GetPlayerID(), NUTBLAST_FIELD_PLAYER_NAME));
+        display_announcement(s);
+
+        spread_str((SendOptions){
+            .data = s,
+            .channel = CHAN_ANNOUNCEMENTS,
+            .reliable = true,
+        });
+    }
+}
+
+void update_game() {
+    static double ticks = 0.0;
+    ticks += delta() * TICKRATE;
+
+    for (; ticks >= 1.0; ticks -= 1.0) {
+        tick();
+        right_press = false;
+    }
+
+    draw_game();
+    update_chat();
 }
