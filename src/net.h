@@ -8,7 +8,8 @@ typedef uint8_t NetChan;
 typedef NutBlast_SendOptions SendOptions;
 
 enum {
-    CHAN_GAME,
+    CHAN_POS,
+    CHAN_ROPE,
     CHAN_CHAT,
     CHAN_ANNOUNCEMENTS,
     CHAN_MAX,

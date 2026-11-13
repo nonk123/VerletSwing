@@ -10,6 +10,7 @@
 #include "net.h"
 #include "screen.h"
 #include "sdl.h"
+#include "stringbuf.h"
 #include "verlet.h"
 
 #define SLIVER (4.0)
@@ -164,19 +165,14 @@ static void insert_monke(NutBlast_PlayerID id) {
         buck->cleanup = free_monke;
 }
 
-static void on_player_joined(NutBlast_PlayerID id) {
+void on_player_joined(NutBlast_PlayerID id) {
     insert_monke(id);
     display_announcement(fmt("%s joined", get_player_name(id)));
 }
 
-static void on_player_left(NutBlast_PlayerID id, NutBlast_Reason r) {
+void on_player_left(NutBlast_PlayerID id, NutBlast_Reason r) {
     display_announcement(fmt("%s left: %s", get_player_name(id), r.msg));
     TinyMapErase(&monkes, id);
-}
-
-void init_game() {
-    NutBlast_OnPlayerJoined(on_player_joined);
-    NutBlast_OnPlayerLeft(on_player_left);
 }
 
 void deinit_game() {
@@ -319,12 +315,13 @@ static void draw_game() {
     sync_camera_with_monke();
     update_camera();
 
-    const Monke* monke = our_monke();
+    const double fs = 48.0, pad = 8.0;
+    const char* s = NULL;
 
-    if (!monke)
-        return;
-
-    draw_rope(monke->rope);
+    TINY_MAP_FOREACH(&monkes, it) {
+        Monke* monke = it.data;
+        draw_rope(monke->rope);
+    }
 
     const int closest = closest_anchor();
 
@@ -333,69 +330,134 @@ static void draw_game() {
         fill_square(anchors[i].pos, 16.0, col);
     }
 
-    SDL_Color player_color = RGB(255, 0, 0);
+    TINY_MAP_FOREACH(&monkes, it) {
+        Monke* monke = it.data;
+        const bool is_us = it.bucket->hash == NutBlast_GetPlayerID();
 
-    const Vec2 vel = Vsub(monke->body.pos, monke->body.old_pos);
-    const Vec2 scale = XY(1.0 - monke->dash_cooldown / DASH_COOLDOWN, 1.0);
+        SDL_Color player_color = is_us ? RGB(255, 0, 0) : RGB(127, 64, 0);
 
-    player_color.a = (uint8_t)lerpin3(0.0, 255.0, 1.0 - monke->dash_cooldown / DASH_COOLDOWN);
-    draw_texture("velvec.png", monke->body.pos, scale, SDL_atan2(vel.y, vel.x), player_color);
-    player_color.a = 255;
+        if (is_us) {
+            const Vec2 vel = Vsub(monke->body.pos, monke->body.old_pos);
+            const Vec2 scale = XY(1.0 - monke->dash_cooldown / DASH_COOLDOWN, 1.0);
 
-    fill_square(monke->body.pos, 16.0, player_color);
+            player_color.a = (uint8_t)lerpin3(0.0, 255.0, 1.0 - monke->dash_cooldown / DASH_COOLDOWN);
+            draw_texture("velvec.png", monke->body.pos, scale, SDL_atan2(vel.y, vel.x), player_color);
+            player_color.a = 255;
+        }
 
-    const double fs = 48.0, pad = 8.0;
-    const char* s = NULL;
+        fill_square(monke->body.pos, 16.0, player_color);
 
-    if (monke->body.pos.y < -STRAT_THRESHOLD) {
-        s = fmt("%d", (int)-monke->body.pos.y);
-        draw_text(XY(monke->body.pos.x - camera_pos().x - 0.5 * text_width(fs, s), pad), fs, s);
+        if (is_us && monke->body.pos.y < -STRAT_THRESHOLD) {
+            s = fmt("%d", (int)-monke->body.pos.y);
+            draw_text(XY(monke->body.pos.x - camera_pos().x - 0.5 * text_width(fs, s), pad), fs, s);
+        }
     }
-
-#if 0
-    s = fmt("A%zu", TinyDLength(anchors));
-    draw_text(XY(w_width() - text_width(fs, s) - pad, pad), fs, s);
-#endif
 
     s = fmt("SCORE: %llu", score);
     draw_text(XY(0.5 * (w_width() - text_width(fs, s)), w_height() - fs - pad), fs, s);
+}
+
+static void pull_updates() {
+    NutBlast_Message msg = {0};
+
+    while (NutBlast_NextMessage(CHAN_POS, &msg)) {
+        Monke* monke = (Monke*)TinyMapGet(&monkes, msg.from);
+
+        if (monke)
+            SDL_sscanf(msg.data, "%lf:%lf", &monke->body.pos.x, &monke->body.pos.y);
+    }
+
+    while (NutBlast_NextMessage(CHAN_ROPE, &msg)) {
+        Monke* monke = (Monke*)TinyMapGet(&monkes, msg.from);
+
+        if (!monke)
+            continue;
+
+        if (SDL_strlen(msg.data)) {
+            SDL_sscanf(msg.data, "%lf:%lf", &monke->rope.end.x, &monke->rope.end.y);
+            monke->rope.start = &monke->body;
+            while (*msg.data++ != ';') {}
+        } else {
+            monke->rope.start = monke->rope.segs = NULL;
+            continue;
+        }
+
+        FreeTinyD(monke->rope.segs);
+        monke->rope.segs = MakeTinyD(VerletBody);
+
+        while (*msg.data) {
+            Vec2 pos = {0};
+            SDL_sscanf(msg.data, "%lf:%lf", &pos.x, &pos.y);
+            while (*msg.data++ != ';') {}
+
+            VerletBody seg = {0};
+            init_verlet(&seg, pos);
+            monke->rope.segs = TinyDAppend(monke->rope.segs, seg);
+        }
+    }
+}
+
+static void push_updates() {
+    TINY_MAP_FOREACH(&monkes, it) {
+        Monke* monke = it.data;
+        const NutBlast_PlayerID id = it.bucket->hash;
+        const bool is_us = id == NutBlast_GetPlayerID();
+
+        if (is_us) {
+            tick_timer(&monke->dash_cooldown);
+
+            if (right_press && monke->dash_cooldown == 0.0) {
+                const Vec2 dir = Vnorm(Vsub(monke->body.pos, monke->body.old_pos)), dash = Vscale(dir, DASH_BOOST);
+
+                for (size_t i = 0; i <= TinyDLength(monke->rope.segs); i++)
+                    push(i ? &monke->rope.segs[i - 1] : &monke->body, dash);
+
+                monke->dash_cooldown = DASH_COOLDOWN;
+            }
+        }
+
+        verlet(&monke->body);
+        verlet_rope(&monke->rope);
+
+        if (is_us) {
+            spread_str((SendOptions){
+                .data = fmt("%lf:%lf", monke->body.pos.x, monke->body.pos.y),
+                .channel = CHAN_POS,
+            });
+
+            StringBuf sb = {0};
+
+            if (monke->rope.start) {
+                sb_write(&sb, fmt("%lf:%lf;", monke->rope.end.x, monke->rope.end.y));
+
+                for (size_t i = 0; i < TinyDLength(monke->rope.segs); i++)
+                    sb_write(&sb, fmt("%lf:%lf;", monke->rope.segs[i].pos.x, monke->rope.segs[i].pos.y));
+            }
+
+            spread_str((SendOptions){
+                .data = sb_string(&sb),
+                .channel = CHAN_ROPE,
+            });
+
+            if (monke->body.pos.y > w_height())
+                tick_timer(&death_timer);
+            else
+                death_timer = DEATH_SECS;
+        }
+    }
+
+    if (death_timer == 0.0) {
+        restart();
+        send_announcement(fmt("%s died!", get_player_name(0)));
+    }
 }
 
 static void tick() {
     generate_anchors();
     score_anchors();
     maybe_manifest_rope();
-
-    Monke* monke = our_monke();
-
-    if (!monke)
-        return;
-
-    tick_timer(&monke->dash_cooldown);
-
-    if (right_press && monke->dash_cooldown == 0.0) {
-        const Vec2 dir = Vnorm(Vsub(monke->body.pos, monke->body.old_pos)), dash = Vscale(dir, DASH_BOOST);
-
-        for (size_t i = 0; i <= TinyDLength(monke->rope.segs); i++)
-            push(i ? &monke->rope.segs[i - 1] : &monke->body, dash);
-
-        monke->dash_cooldown = DASH_COOLDOWN;
-    }
-
-    verlet(&monke->body);
-    verlet_rope(&monke->rope);
-
-    if (monke->body.pos.y > w_height())
-        tick_timer(&death_timer);
-    else
-        death_timer = DEATH_SECS;
-
-    if (death_timer == 0.0) {
-        restart();
-
-        const char* s = fmt("%s died!", get_player_name(0));
-        send_announcement(s);
-    }
+    pull_updates();
+    push_updates();
 }
 
 void update_game() {

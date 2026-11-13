@@ -16,17 +16,31 @@ typedef struct {
     void (*init)(), (*update)(), (*deinit)();
 } Screen;
 
+static void on_ready() {
+    goto_screen(SCR_PLAY);
+}
+
+static void init_scr_join() {
+    NutBlast_OnReady(on_ready);
+
+    extern void on_player_joined(NutBlast_PlayerID);
+    NutBlast_OnPlayerJoined(on_player_joined);
+
+    extern void on_player_left(NutBlast_PlayerID, NutBlast_Reason);
+    NutBlast_OnPlayerLeft(on_player_left);
+}
+
 static void update_scr_join() {
+    clear_screen(BACKGROUND_BASE);
+
     const double fs = 48.0;
     const char* s = NULL;
 
-    if (tap) {
+    if (NutBlast_IsConnecting()) {
+        s = "Joining...";
+    } else if (tap) {
         NutBlast_SetLobbyField("seed", fmt("%u", SDL_rand_bits()));
         NutBlast_IDGAF((NutBlast_HostOptions){.max_players = 4});
-    } else if (NutBlast_IsReady()) {
-        goto_screen(SCR_PLAY);
-    } else if (NutBlast_IsOnline()) {
-        s = "Joining...";
     } else {
         s = "Tap to join a lobby";
     }
@@ -38,9 +52,6 @@ static void update_scr_join() {
 static void init_scr_play() {
     restart();
     clear_chat();
-
-    extern void init_game();
-    init_game();
 }
 
 static void update_scr_play() {
@@ -57,7 +68,7 @@ static void deinit_scr_play() {
 
 static Screen table[SCR_MAX] = {
     [SCR_NONE] = {},
-    [SCR_JOIN] = {.update = update_scr_join},
+    [SCR_JOIN] = {.init = init_scr_join, .update = update_scr_join},
     [SCR_PLAY] = {.init = init_scr_play, .update = update_scr_play, .deinit = deinit_scr_play},
 };
 
