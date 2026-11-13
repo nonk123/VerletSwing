@@ -18,16 +18,19 @@
 
 #define STRAT_THRESHOLD (8.0)
 
-#define ANCHOR_STEP (0.7 * MAX_HOOK_DISTANCE)
+#define ANCHOR_STEP (120.0)
+#define ANCHOR_PROB (0.2)
+#define MAX_CONSECUTIVE_SKIPS (4)
+
 #define CULL_RADIUS (2.0 * w_width())
-#define FIRST_ANCHOR_X (ANCHOR_STEP)
+#define FIRST_ANCHOR_X (240.0)
 
 #define DASH_COOLDOWN (5.5)
 #define DASH_BOOST (512.0)
 
 #define DEATH_SECS (1.4)
 
-uint64_t score = 0, hiscore = 0;
+uint64_t score = 0;
 
 typedef struct {
     VerletBody *segs, *start;
@@ -70,18 +73,12 @@ static void init_monke(Monke* this) {
     this->dash_cooldown = 0.0;
 }
 
-static void place_anchor(const double x) {
-    const double pad = 16.0, range = w_height() * 0.66;
-    double y = pad + SDL_randf() * range;
-
-    if (x == FIRST_ANCHOR_X)
-        y = pad + 0.5 * range;
+static void place_anchor(const double x, const double y) {
+    for (size_t i = 0; i < TinyDLength(anchors); i++)
+        if (anchors[i].pos.x == x)
+            return;
 
     anchors = TinyDAppendPro(anchors, &(Anchor){x, y});
-}
-
-static double step() {
-    return ANCHOR_STEP * (0.4 + SDL_randf());
 }
 
 static Monke* our_monke() {
@@ -112,33 +109,35 @@ static void generate_anchors() {
     if (!monke)
         return;
 
+    const double pad = 16.0, range = w_height() * 0.66;
+
     if (TinyDLength(anchors))
         cull_anchors();
     else
-        place_anchor(FIRST_ANCHOR_X);
+        place_anchor(FIRST_ANCHOR_X, pad + 0.5 * range);
 
-    double min = anchors[0].pos.x, max = min;
-
-    for (size_t i = 1; i < TinyDLength(anchors); i++) {
-        const double cur = anchors[i].pos.x;
-
-        if (cur < min)
-            min = cur;
-
-        if (cur > max)
-            max = cur;
-    }
+    uint32_t seed = 0;
+    SDL_sscanf(NutBlast_GetLobbyField("seed"), "%u", &seed);
+    SDL_srand(seed);
 
     const double center = monke->body.pos.x;
+    const double start = center - 0.98 * CULL_RADIUS;
+    const double end = center + 0.98 * CULL_RADIUS;
+    size_t skips = 0;
 
-    while (min > ANCHOR_STEP && min > center - CULL_RADIUS) {
-        min -= step();
-        place_anchor(min);
-    }
+    for (double x = FIRST_ANCHOR_X; x < end; x += ANCHOR_STEP) {
+        // NOTE: making sure we run both `SDL_randf`s in the same iteration for the LCG to produce a deterministic
+        // result.
+        const double y = pad + SDL_randf() * range;
+        const double prob = SDL_randf();
 
-    while (max < center + CULL_RADIUS) {
-        max += step();
-        place_anchor(max);
+        if (prob < ANCHOR_PROB || skips >= MAX_CONSECUTIVE_SKIPS) {
+            if (x >= start)
+                place_anchor(x, y);
+            skips = 0;
+        } else {
+            skips += 1;
+        }
     }
 }
 
