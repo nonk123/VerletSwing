@@ -42,8 +42,7 @@ static void push_line(const char* s) {
 }
 
 void display_chat_message(NutBlast_PlayerID from, const char* s) {
-    const char* name = NutBlast_GetPlayerField(from, NUTBLAST_FIELD_PLAYER_NAME);
-    push_line(fmt("%s: %s", name, s));
+    push_line(fmt("%s: %s", get_player_name(from), s));
 }
 
 void display_announcement(const char* s) {

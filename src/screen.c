@@ -1,5 +1,6 @@
 #include "chat.h"
 #include "draw.h"
+#include "fmt.h"
 #include "game.h"
 #include "net.h"
 #include "screen.h"
@@ -19,14 +20,16 @@ static void update_scr_join() {
     const double fs = 48.0;
     const char* s = NULL;
 
-    if (tap)
+    if (tap) {
+        NutBlast_SetLobbyField("seed", fmt("%u", SDL_rand_bits()));
         NutBlast_IDGAF((NutBlast_HostOptions){.max_players = 4});
-    else if (NutBlast_IsReady())
+    } else if (NutBlast_IsReady()) {
         goto_screen(SCR_PLAY);
-    else if (NutBlast_IsOnline())
+    } else if (NutBlast_IsOnline()) {
         s = "Joining...";
-    else
+    } else {
         s = "Tap to join a lobby";
+    }
 
     if (s)
         draw_text(XY(0.5 * (w_width() - text_width(fs, s)), 0.5 * (w_height() - fs)), fs, s);
@@ -35,6 +38,9 @@ static void update_scr_join() {
 static void init_scr_play() {
     restart();
     clear_chat();
+
+    extern void init_game();
+    init_game();
 }
 
 static void update_scr_play() {
@@ -44,10 +50,15 @@ static void update_scr_play() {
         goto_screen(SCR_JOIN);
 }
 
+static void deinit_scr_play() {
+    extern void deinit_game();
+    deinit_game();
+}
+
 static Screen table[SCR_MAX] = {
     [SCR_NONE] = {},
     [SCR_JOIN] = {.update = update_scr_join},
-    [SCR_PLAY] = {.init = init_scr_play, .update = update_scr_play},
+    [SCR_PLAY] = {.init = init_scr_play, .update = update_scr_play, .deinit = deinit_scr_play},
 };
 
 void goto_screen(ScreenIndex idx) {

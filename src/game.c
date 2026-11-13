@@ -44,7 +44,7 @@ typedef struct {
     bool scored;
 } Anchor;
 
-static Monke monke = {0};
+static TinyMap monkes = {0};
 static Anchor* anchors = NULL;
 
 static double death_timer = DEATH_SECS;
@@ -64,8 +64,7 @@ static void nuke_rope(Rope* this) {
 static void init_monke(Monke* this) {
     Vec2 pos = Vscale(XY(0.0, -STRAT_THRESHOLD), 0.5);
     init_verlet(&this->body, pos);
-
-    nuke_rope(&monke.rope);
+    nuke_rope(&this->rope);
 
     this->dash_cooldown = 0.0;
 }
@@ -84,8 +83,17 @@ static double step() {
     return ANCHOR_STEP * (0.4 + SDL_randf());
 }
 
+static Monke* our_monke() {
+    return (Monke*)TinyMapGet(&monkes, NutBlast_GetPlayerID());
+}
+
 static void cull_anchors() {
-    const double center = monke.body.pos.x;
+    const Monke* monke = our_monke();
+
+    if (!monke)
+        return;
+
+    const double center = monke->body.pos.x;
 
     for (size_t i = 0; i < TinyDLength(anchors);) {
         const double cur = anchors[i].pos.x;
@@ -98,6 +106,11 @@ static void cull_anchors() {
 }
 
 static void generate_anchors() {
+    const Monke* monke = our_monke();
+
+    if (!monke)
+        return;
+
     if (TinyDLength(anchors))
         cull_anchors();
     else
@@ -115,7 +128,7 @@ static void generate_anchors() {
             max = cur;
     }
 
-    const double center = monke.body.pos.x;
+    const double center = monke->body.pos.x;
 
     while (min > ANCHOR_STEP && min > center - CULL_RADIUS) {
         min -= step();
@@ -129,14 +142,52 @@ static void generate_anchors() {
 }
 
 static void sync_camera_with_monke() {
-    set_camera_target(XY(monke.body.pos.x - w_width() / 4, 0.0));
+    const Monke* monke = our_monke();
+
+    if (monke)
+        set_camera_target(XY(monke->body.pos.x - w_width() / 4, 0.0));
+}
+
+static void free_monke(void* self) {
+    Monke* monke = self;
+    nuke_rope(&monke->rope);
+}
+
+static void insert_monke(NutBlast_PlayerID id) {
+    Monke monke = {0};
+    init_monke(&monke);
+    monke.body.f_gravity = true;
+
+    TinyBucket* buck = TinyMapPut(&monkes, id, &monke, sizeof(monke));
+
+    if (buck)
+        buck->cleanup = free_monke;
+}
+
+static void on_player_joined(NutBlast_PlayerID id) {
+    insert_monke(id);
+    display_announcement(fmt("%s joined", get_player_name(id)));
+}
+
+static void on_player_left(NutBlast_PlayerID id, NutBlast_Reason r) {
+    display_announcement(fmt("%s left: %s", get_player_name(id), r.msg));
+    TinyMapErase(&monkes, id);
+}
+
+void init_game() {
+    NutBlast_OnPlayerJoined(on_player_joined);
+    NutBlast_OnPlayerLeft(on_player_left);
+}
+
+void deinit_game() {
+    FreeTinyMap(&monkes);
+    NutBlast_OnPlayerJoined(NULL);
+    NutBlast_OnPlayerLeft(NULL);
 }
 
 void restart() {
     score = 0;
-
-    init_monke(&monke);
-    monke.body.f_gravity = true;
+    insert_monke(NutBlast_GetPlayerID());
 
     FreeTinyD(anchors);
     anchors = MakeTinyD(Anchor);
@@ -146,10 +197,15 @@ void restart() {
 }
 
 static void score_anchors() {
+    const Monke* monke = our_monke();
+
+    if (!monke)
+        return;
+
     for (size_t i = 0; i < TinyDLength(anchors); i++) {
         const double x = anchors[i].pos.x;
 
-        if (!anchors[i].scored && x >= 0.0 && monke.body.pos.x >= x)
+        if (!anchors[i].scored && x >= 0.0 && monke->body.pos.x >= x)
             score += 1, anchors[i].scored = true;
     }
 }
@@ -158,33 +214,40 @@ static int closest_anchor() {
     if (!TinyDLength(anchors))
         return -1;
 
+    Monke* monke = (Monke*)TinyMapGet(&monkes, NutBlast_GetPlayerID());
+
+    if (!monke)
+        return -1;
+
     int closest = 0;
-    const double ahead = 2.0 * monke.body.pos.x - monke.body.old_pos.x;
+    const double ahead = 2.0 * monke->body.pos.x - monke->body.old_pos.x;
 
     for (int i = 1; i < TinyDLength(anchors); i++)
         if (SDL_fabs(ahead - anchors[i].pos.x) <= SDL_fabs(ahead - anchors[closest].pos.x))
             closest = i;
 
-    if (Vdist(monke.body.pos, anchors[closest].pos) <= MAX_HOOK_DISTANCE)
+    if (Vdist(monke->body.pos, anchors[closest].pos) <= MAX_HOOK_DISTANCE)
         return closest;
 
     closest = 0;
 
     for (int i = 1; i < TinyDLength(anchors); i++)
-        if (Vdist(monke.body.pos, anchors[i].pos) <= Vdist(monke.body.pos, anchors[closest].pos))
+        if (Vdist(monke->body.pos, anchors[i].pos) <= Vdist(monke->body.pos, anchors[closest].pos))
             closest = i;
 
-    if (Vdist(monke.body.pos, anchors[closest].pos) <= MAX_HOOK_DISTANCE)
+    if (Vdist(monke->body.pos, anchors[closest].pos) <= MAX_HOOK_DISTANCE)
         return closest;
 
     return -1;
 }
 
 static void maybe_manifest_rope() {
-    if (!left_press)
-        nuke_rope(&monke.rope);
+    Monke* monke = our_monke();
 
-    if (!left_press || monke.rope.segs)
+    if (!left_press)
+        nuke_rope(&monke->rope);
+
+    if (!left_press || monke->rope.segs)
         return;
 
     const int closest = closest_anchor();
@@ -192,27 +255,27 @@ static void maybe_manifest_rope() {
     if (closest < 0)
         return;
 
-    const Vec2 dir = Vsub(anchors[closest].pos, monke.body.pos);
+    const Vec2 dir = Vsub(anchors[closest].pos, monke->body.pos);
     const size_t segs = (size_t)(Vlen(dir) / SLIVER);
 
     if (segs < 2)
         return;
 
-    const Vec2 initial_velocity = Vsub(monke.body.pos, monke.body.old_pos);
+    const Vec2 initial_velocity = Vsub(monke->body.pos, monke->body.old_pos);
 
-    monke.rope.segs = MakeTinyD(VerletBody);
-    monke.rope.end = anchors[closest].pos;
-    monke.rope.start = &monke.body;
+    monke->rope.segs = MakeTinyD(VerletBody);
+    monke->rope.end = anchors[closest].pos;
+    monke->rope.start = &monke->body;
 
     for (size_t i = 0; i <= segs; i++) {
         const Vec2 pos = Vscale(dir, (double)i / (double)segs);
 
         VerletBody seg = {0};
-        init_verlet(&seg, Vadd(pos, monke.body.pos));
+        init_verlet(&seg, Vadd(pos, monke->body.pos));
         seg.old_pos = Vsub(seg.old_pos, initial_velocity);
         seg.f_gravity = true;
 
-        monke.rope.segs = TinyDAppendPro(monke.rope.segs, &seg);
+        monke->rope.segs = TinyDAppendPro(monke->rope.segs, &seg);
     }
 }
 
@@ -256,7 +319,12 @@ static void draw_game() {
     sync_camera_with_monke();
     update_camera();
 
-    draw_rope(monke.rope);
+    const Monke* monke = our_monke();
+
+    if (!monke)
+        return;
+
+    draw_rope(monke->rope);
 
     const int closest = closest_anchor();
 
@@ -267,21 +335,21 @@ static void draw_game() {
 
     SDL_Color player_color = RGB(255, 0, 0);
 
-    const Vec2 vel = Vsub(monke.body.pos, monke.body.old_pos);
-    const Vec2 scale = XY(1.0 - monke.dash_cooldown / DASH_COOLDOWN, 1.0);
+    const Vec2 vel = Vsub(monke->body.pos, monke->body.old_pos);
+    const Vec2 scale = XY(1.0 - monke->dash_cooldown / DASH_COOLDOWN, 1.0);
 
-    player_color.a = (uint8_t)lerpin3(0.0, 255.0, 1.0 - monke.dash_cooldown / DASH_COOLDOWN);
-    draw_texture("velvec.png", monke.body.pos, scale, SDL_atan2(vel.y, vel.x), player_color);
+    player_color.a = (uint8_t)lerpin3(0.0, 255.0, 1.0 - monke->dash_cooldown / DASH_COOLDOWN);
+    draw_texture("velvec.png", monke->body.pos, scale, SDL_atan2(vel.y, vel.x), player_color);
     player_color.a = 255;
 
-    fill_square(monke.body.pos, 16.0, player_color);
+    fill_square(monke->body.pos, 16.0, player_color);
 
     const double fs = 48.0, pad = 8.0;
     const char* s = NULL;
 
-    if (monke.body.pos.y < -STRAT_THRESHOLD) {
-        s = fmt("%d", (int)-monke.body.pos.y);
-        draw_text(XY(monke.body.pos.x - camera_pos().x - 0.5 * text_width(fs, s), pad), fs, s);
+    if (monke->body.pos.y < -STRAT_THRESHOLD) {
+        s = fmt("%d", (int)-monke->body.pos.y);
+        draw_text(XY(monke->body.pos.x - camera_pos().x - 0.5 * text_width(fs, s), pad), fs, s);
     }
 
 #if 0
@@ -298,21 +366,26 @@ static void tick() {
     score_anchors();
     maybe_manifest_rope();
 
-    tick_timer(&monke.dash_cooldown);
+    Monke* monke = our_monke();
 
-    if (right_press && monke.dash_cooldown == 0.0) {
-        const Vec2 dir = Vnorm(Vsub(monke.body.pos, monke.body.old_pos)), dash = Vscale(dir, DASH_BOOST);
+    if (!monke)
+        return;
 
-        for (size_t i = 0; i <= TinyDLength(monke.rope.segs); i++)
-            push(i ? &monke.rope.segs[i - 1] : &monke.body, dash);
+    tick_timer(&monke->dash_cooldown);
 
-        monke.dash_cooldown = DASH_COOLDOWN;
+    if (right_press && monke->dash_cooldown == 0.0) {
+        const Vec2 dir = Vnorm(Vsub(monke->body.pos, monke->body.old_pos)), dash = Vscale(dir, DASH_BOOST);
+
+        for (size_t i = 0; i <= TinyDLength(monke->rope.segs); i++)
+            push(i ? &monke->rope.segs[i - 1] : &monke->body, dash);
+
+        monke->dash_cooldown = DASH_COOLDOWN;
     }
 
-    verlet(&monke.body);
-    verlet_rope(&monke.rope);
+    verlet(&monke->body);
+    verlet_rope(&monke->rope);
 
-    if (monke.body.pos.y > w_height())
+    if (monke->body.pos.y > w_height())
         tick_timer(&death_timer);
     else
         death_timer = DEATH_SECS;
@@ -320,14 +393,8 @@ static void tick() {
     if (death_timer == 0.0) {
         restart();
 
-        const char* s = fmt("%s died!", NutBlast_GetPlayerField(NutBlast_GetPlayerID(), NUTBLAST_FIELD_PLAYER_NAME));
-        display_announcement(s);
-
-        spread_str((SendOptions){
-            .data = s,
-            .channel = CHAN_ANNOUNCEMENTS,
-            .reliable = true,
-        });
+        const char* s = fmt("%s died!", get_player_name(0));
+        send_announcement(s);
     }
 }
 
