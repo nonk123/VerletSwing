@@ -46,7 +46,7 @@ void display_chat_message(NutBlast_PlayerID from, const char* s) {
 }
 
 void display_announcement(const char* s) {
-    push_line(fmt("ANAL: %s", s));
+    push_line(fmt("> %s", s));
 }
 
 void update_chat() {
