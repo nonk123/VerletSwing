@@ -23,14 +23,14 @@ static void set_line(size_t i, const char* s) {
 static void pop_front() {
     for (size_t i = 0; i < SDL_arraysize(LINES) - 1; i++)
         set_line(i, LINES[i + 1]);
-    set_line(SDL_arraysize(LINES) - 1, "");
+    SDL_memset(LINES[SDL_arraysize(LINES) - 1], 0, sizeof(LINES[0]));
 }
 
 static void push_line(const char* s) {
     SDL_LogInfo(SDL_LOG_CATEGORY_APPLICATION, "%s", s);
     pop_timer = POP_INTERVAL;
 
-    for (size_t i = 0; i < SDL_arraysize(LINES) - 1; i++) {
+    for (size_t i = 0; i < SDL_arraysize(LINES); i++) {
         if (!LINES[i][0]) {
             set_line(i, s);
             return;
