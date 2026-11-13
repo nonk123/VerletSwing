@@ -56,7 +56,7 @@ SDL_AppResult SDL_AppInit(void** ctx, int argc, char* argv[]) {
     SDL_SetRenderVSync(renderer, SDL_RENDERER_VSYNC_ADAPTIVE);
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
-    goto_screen(SCR_JOIN);
+    goto_screen(SCR_TAP_TO_JOIN);
 
     return SDL_APP_CONTINUE;
 }

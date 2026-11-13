@@ -16,18 +16,17 @@ typedef struct {
     void (*init)(), (*update)(), (*deinit)();
 } Screen;
 
-static void on_ready() {
+static void on_arrived() {
     goto_screen(SCR_PLAY);
 }
 
+static void on_disconnected() {
+    goto_screen(SCR_TAP_TO_JOIN);
+}
+
 static void init_scr_join() {
-    NutBlast_OnReady(on_ready);
-
-    extern void on_player_joined(NutBlast_PlayerID);
-    NutBlast_OnPlayerJoined(on_player_joined);
-
-    extern void on_player_left(NutBlast_PlayerID, NutBlast_Reason);
-    NutBlast_OnPlayerLeft(on_player_left);
+    NutBlast_OnArrived(on_arrived);
+    NutBlast_OnDisconnected(on_disconnected);
 }
 
 static void update_scr_join() {
@@ -52,23 +51,32 @@ static void update_scr_join() {
 static void init_scr_play() {
     restart();
     clear_chat();
+
+    extern void on_player_joined(NutBlast_PlayerID);
+    NutBlast_OnPlayerJoined(on_player_joined);
+
+    extern void on_player_left(NutBlast_PlayerID, NutBlast_Reason);
+    NutBlast_OnPlayerLeft(on_player_left);
 }
 
 static void update_scr_play() {
     if (NutBlast_IsOnline())
         update_game();
     else
-        goto_screen(SCR_JOIN);
+        goto_screen(SCR_TAP_TO_JOIN);
 }
 
 static void deinit_scr_play() {
+    NutBlast_OnPlayerJoined(NULL);
+    NutBlast_OnPlayerLeft(NULL);
+
     extern void deinit_game();
     deinit_game();
 }
 
 static Screen table[SCR_MAX] = {
     [SCR_NONE] = {},
-    [SCR_JOIN] = {.init = init_scr_join, .update = update_scr_join},
+    [SCR_TAP_TO_JOIN] = {.init = init_scr_join, .update = update_scr_join},
     [SCR_PLAY] = {.init = init_scr_play, .update = update_scr_play, .deinit = deinit_scr_play},
 };
 
