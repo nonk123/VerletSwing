@@ -33,7 +33,7 @@
 uint64_t score = 0;
 
 typedef struct {
-    VerletBody *segs, *start;
+    VerletBody* segs;
     Vec2 end;
 } Rope;
 
@@ -62,7 +62,7 @@ static void tick_timer(double* rem) {
 
 static void nuke_rope(Rope* this) {
     FreeTinyD(this->segs);
-    this->start = this->segs = NULL;
+    this->segs = NULL;
 }
 
 static void init_monke(Monke* this) {
@@ -260,7 +260,6 @@ static void maybe_manifest_rope() {
 
     monke->rope.segs = MakeTinyD(VerletBody);
     monke->rope.end = anchors[closest].pos;
-    monke->rope.start = &monke->body;
 
     for (size_t i = 0; i <= segs; i++) {
         const Vec2 pos = Vscale(dir, (double)i / (double)segs);
@@ -274,13 +273,13 @@ static void maybe_manifest_rope() {
     }
 }
 
-static void constrain_rope(Rope* rope) {
-    for (int i = 0; i < (int)TinyDLength(rope->segs); i++) {
-        VerletBody* const a = i ? &rope->segs[i - 1] : rope->start;
-        VerletBody* const b = &rope->segs[i];
+static void constrain_rope(Monke* monke) {
+    for (int i = 0; i < (int)TinyDLength(monke->rope.segs); i++) {
+        VerletBody* const a = i ? &monke->rope.segs[i - 1] : &monke->body;
+        VerletBody* const b = &monke->rope.segs[i];
 
-        if (i == TinyDLength(rope->segs) - 1)
-            b->pos = rope->end; // !! IMPORTANT
+        if (i == TinyDLength(monke->rope.segs) - 1)
+            b->pos = monke->rope.end; // !! IMPORTANT
         // rope doesn't rope ^ without this
 
         const double dist = Vdist(a->pos, b->pos);
@@ -295,12 +294,12 @@ static void constrain_rope(Rope* rope) {
     }
 }
 
-static void verlet_rope(Rope* rope) {
-    for (size_t i = 0; i < TinyDLength(rope->segs); i++)
-        verlet(rope->segs + i);
+static void verlet_rope(Monke* monke) {
+    for (size_t i = 0; i < TinyDLength(monke->rope.segs); i++)
+        verlet(monke->rope.segs + i);
 
     for (size_t i = 0; i < 120; i++)
-        constrain_rope(rope);
+        constrain_rope(monke);
 }
 
 static void draw_rope(Rope rope) {
@@ -374,10 +373,10 @@ static void pull_updates() {
 
         if (SDL_strlen(msg.data)) {
             SDL_sscanf(msg.data, "%lf:%lf", &monke->rope.end.x, &monke->rope.end.y);
-            monke->rope.start = &monke->body;
             while (*msg.data++ != ';') {}
         } else {
-            monke->rope.start = monke->rope.segs = NULL;
+            FreeTinyD(monke->rope.segs);
+            monke->rope.segs = NULL;
             continue;
         }
 
@@ -416,7 +415,7 @@ static void push_updates() {
         }
 
         verlet(&monke->body);
-        verlet_rope(&monke->rope);
+        verlet_rope(monke);
 
         if (is_us) {
             spread_str((SendOptions){
@@ -426,7 +425,7 @@ static void push_updates() {
 
             StringBuf sb = {0};
 
-            if (monke->rope.start) {
+            if (monke->rope.segs) {
                 sb_write(&sb, fmt("%lf:%lf;", monke->rope.end.x, monke->rope.end.y));
 
                 for (size_t i = 0; i < TinyDLength(monke->rope.segs); i++)
