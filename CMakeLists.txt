@@ -40,7 +40,7 @@ list(APPEND LIBS SDL3::SDL3-static)
 
 FetchContent_Declare(S_tructures
     GIT_REPOSITORY https://github.com/Schwungus/S_tructures.git
-    GIT_TAG b867668c4b991bb2482d34a98416a3a106447544
+    GIT_TAG 76e7bc5b6c0604149d3a4cad01af3a8f1c8bb777
     EXCLUDE_FROM_ALL)
 
 FetchContent_MakeAvailable(S_tructures)
@@ -48,7 +48,7 @@ list(APPEND LIBS S_tructures)
 
 FetchContent_Declare(NutBlast
     GIT_REPOSITORY https://github.com/Schwungus/NutBlast.git
-    GIT_TAG 8b986409ee3ccbc35239389e24a5505a34dc1db1
+    GIT_TAG 1e23b99bf55186e87f66d65f74f7c503678daf66
     EXCLUDE_FROM_ALL)
 
 FetchContent_MakeAvailable(NutBlast)

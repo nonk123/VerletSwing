@@ -31,6 +31,7 @@
 #define DEATH_SECS (1.4)
 
 uint64_t score = 0;
+int64_t last_scored_idx = -1;
 
 typedef struct {
     VerletBody* segs;
@@ -73,12 +74,17 @@ static void init_monke(Monke* this) {
     this->dash_cooldown = 0.0;
 }
 
+static int64_t anchor_idx(const double x) {
+    return (int64_t)(SDL_round((x - FIRST_ANCHOR_X) / ANCHOR_STEP));
+}
+
 static void place_anchor(const double x, const double y) {
     for (size_t i = 0; i < TinyDLength(anchors); i++)
         if (anchors[i].pos.x == x)
             return;
 
-    anchors = TinyDAppendPro(anchors, &(Anchor){x, y});
+    const bool scored = anchor_idx(x) < last_scored_idx;
+    anchors = TinyDPush(anchors, &(Anchor){x, y, scored});
 }
 
 static Monke* our_monke() {
@@ -182,6 +188,8 @@ void deinit_game() {
 
 void restart() {
     score = 0;
+    last_scored_idx = -1;
+
     insert_monke(NutBlast_GetPlayerID());
 
     FreeTinyD(anchors);
@@ -200,8 +208,11 @@ static void score_anchors() {
     for (size_t i = 0; i < TinyDLength(anchors); i++) {
         const double x = anchors[i].pos.x;
 
-        if (!anchors[i].scored && x >= 0.0 && monke->body.pos.x >= x)
-            score += 1, anchors[i].scored = true;
+        if (!anchors[i].scored && monke->body.pos.x >= x) {
+            score += 1;
+            last_scored_idx = anchor_idx(x);
+            anchors[i].scored = true;
+        }
     }
 }
 
@@ -269,7 +280,7 @@ static void maybe_manifest_rope() {
         seg.old_pos = Vsub(seg.old_pos, initial_velocity);
         seg.f_gravity = true;
 
-        monke->rope.segs = TinyDAppendPro(monke->rope.segs, &seg);
+        monke->rope.segs = TinyDPush(monke->rope.segs, &seg);
     }
 }
 
@@ -390,7 +401,7 @@ static void pull_updates() {
 
             VerletBody seg = {0};
             init_verlet(&seg, pos);
-            monke->rope.segs = TinyDAppend(monke->rope.segs, seg);
+            monke->rope.segs = TinyDPush(monke->rope.segs, &seg);
         }
     }
 }
