@@ -98,6 +98,5 @@ void update_screen() {
     if (cur_screen != SCR_NONE && table[cur_screen].update)
         table[cur_screen].update();
 
-    right_press = false;
     tap = false;
 }
