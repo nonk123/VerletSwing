@@ -406,7 +406,7 @@ static void pull_updates() {
     }
 }
 
-static void push_updates() {
+static void run_updates() {
     TINY_MAP_FOREACH(&monkes, it) {
         Monke* monke = it.data;
         const NutBlast_PlayerID id = it.bucket->hash;
@@ -429,25 +429,6 @@ static void push_updates() {
         verlet_rope(monke);
 
         if (is_us) {
-            spread_str((SendOptions){
-                .data = fmt("%lf:%lf", monke->body.pos.x, monke->body.pos.y),
-                .channel = CHAN_POS,
-            });
-
-            StringBuf sb = {0};
-
-            if (monke->rope.segs) {
-                sb_write(&sb, fmt("%lf:%lf;", monke->rope.end.x, monke->rope.end.y));
-
-                for (size_t i = 0; i < TinyDLength(monke->rope.segs); i++)
-                    sb_write(&sb, fmt("%lf:%lf;", monke->rope.segs[i].pos.x, monke->rope.segs[i].pos.y));
-            }
-
-            spread_str((SendOptions){
-                .data = sb_string(&sb),
-                .channel = CHAN_ROPE,
-            });
-
             if (monke->body.pos.y > w_height())
                 tick_timer(&death_timer);
             else
@@ -465,11 +446,38 @@ static void tick() {
     generate_anchors();
     score_anchors();
     maybe_manifest_rope();
-    pull_updates();
-    push_updates();
+    run_updates();
+}
+
+static void push_updates() {
+    const Monke* monke = our_monke();
+
+    if (!monke)
+        return;
+
+    spread_str((SendOptions){
+        .data = fmt("%lf:%lf", monke->body.pos.x, monke->body.pos.y),
+        .channel = CHAN_POS,
+    });
+
+    StringBuf sb = {0};
+
+    if (monke->rope.segs) {
+        sb_write(&sb, fmt("%lf:%lf;", monke->rope.end.x, monke->rope.end.y));
+
+        for (size_t i = 0; i < TinyDLength(monke->rope.segs); i++)
+            sb_write(&sb, fmt("%lf:%lf;", monke->rope.segs[i].pos.x, monke->rope.segs[i].pos.y));
+    }
+
+    spread_str((SendOptions){
+        .data = sb_string(&sb),
+        .channel = CHAN_ROPE,
+    });
 }
 
 void update_game() {
+    pull_updates();
+
     static double ticks = 0.0;
     ticks += delta() * TICKRATE;
 
@@ -478,6 +486,7 @@ void update_game() {
         right_press = false;
     }
 
+    push_updates();
     draw_game();
     update_chat();
 }
