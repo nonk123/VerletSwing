@@ -9,6 +9,10 @@
 #include <SDL3/SDL_video.h>
 
 #define S_TRUCTURES_IMPLEMENTATION
+#define S_Alloc SDL_malloc
+#define S_Free SDL_free
+#define S_Memset SDL_memset
+#define S_Memcpy SDL_memcpy
 #include <S_tructures.h>
 
 #include <NutBlast.h>

@@ -167,7 +167,7 @@ static void insert_monke(NutBlast_PlayerID id) {
     TinyBucket* buck = TinyMapPut(&monkes, id, &monke, sizeof(monke));
 
     if (buck)
-        buck->cleanup = free_monke;
+        buck->data.cleanup = free_monke;
 }
 
 void on_player_joined(NutBlast_PlayerID id) {

@@ -40,7 +40,7 @@ list(APPEND LIBS SDL3::SDL3-static)
 
 FetchContent_Declare(S_tructures
     GIT_REPOSITORY https://github.com/Schwungus/S_tructures.git
-    GIT_TAG 76e7bc5b6c0604149d3a4cad01af3a8f1c8bb777
+    GIT_TAG a9decfcabbc43501ada9f83d2892650584b70551
     EXCLUDE_FROM_ALL)
 
 FetchContent_MakeAvailable(S_tructures)
