@@ -115,7 +115,7 @@ static void generate_anchors() {
     if (!monke)
         return;
 
-    const double pad = 16.0, range = w_height() * 0.66;
+    const double pad = 16.0, range = 528.0;
 
     if (TinyDLength(anchors))
         cull_anchors();

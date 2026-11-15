@@ -3,6 +3,7 @@
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_log.h>
 #include <SDL3/SDL_main.h>
+#include <SDL3/SDL_platform.h>
 #include <SDL3/SDL_render.h>
 #include <SDL3/SDL_stdinc.h>
 #include <SDL3/SDL_timer.h>
@@ -50,7 +51,13 @@ SDL_AppResult SDL_AppInit(void** ctx, int argc, char* argv[]) {
     if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO))
         return SDL_Fail();
 
-    if (!SDL_CreateWindowAndRenderer(GAME_TITLE, 800, 600, 0, &window, &renderer))
+#ifdef SDL_PLATFORM_EMSCRIPTEN
+    const int w = 0, h = 0;
+#else
+    const int w = 800, h = 600;
+#endif
+
+    if (!SDL_CreateWindowAndRenderer(GAME_TITLE, w, h, 0, &window, &renderer))
         return SDL_Fail();
 
     const char* name = fmt("%04d", SDL_rand(10000));
@@ -119,7 +126,7 @@ SDL_AppResult SDL_AppEvent(void* ctx, SDL_Event* event) {
         break;
 
     case SDL_EVENT_KEY_DOWN:
-#ifndef __EMSCRIPTEN__
+#ifndef SDL_PLATFORM_EMSCRIPTEN
         if (event->key.key == SDLK_ESCAPE)
             return SDL_APP_SUCCESS;
 #endif

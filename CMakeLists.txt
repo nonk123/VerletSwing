@@ -78,7 +78,10 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
     DEBUG=${DEBUG})
 
 if(EMSCRIPTEN)
+    set(HTML_SHELL ${CMAKE_SOURCE_DIR}/src/shell.html)
+    set_property(TARGET ${PROJECT_NAME} PROPERTY LINK_DEPENDS ${HTML_SHELL})
     target_link_options(${PROJECT_NAME} PRIVATE
+        --shell-file ${HTML_SHELL}
         --preload-file ${CMAKE_SOURCE_DIR}/assets@assets
         -sEXPORTED_RUNTIME_METHODS=HEAPF32,HEAPU32,HEAPU8
         -sNO_DISABLE_EXCEPTION_CATCHING

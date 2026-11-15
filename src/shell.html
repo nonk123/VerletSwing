@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Verlet Swing</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            overflow: hidden;
+        }
+
+        #canvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            outline: none;
+        }
+
+        #status {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-family: sans-serif;
+            font-size: 1.2rem;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="status">Loading...</div>
+
+    <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
+
+    <script>
+        var statusElement = document.getElementById("status");
+        var canvasElement = document.getElementById("canvas");
+
+        var Module = {
+            canvas: (function () {
+                canvasElement.addEventListener("webglcontextlost", function (e) {
+                    alert("WebGL context lost. You will need to reload the page.");
+                    e.preventDefault();
+                }, false);
+                return canvasElement;
+            })(),
+            setStatus: function (text) {
+                if (text) {
+                    statusElement.style.display = "block";
+                    statusElement.innerText = text;
+                } else {
+                    statusElement.style.display = "none";
+                }
+            },
+            onRuntimeInitialized: function () {
+                statusElement.style.display = "none";
+                canvasElement.focus();
+            }
+        };
+
+        window.addEventListener("click", function () {
+            canvasElement.focus();
+        });
+    </script>
+
+    {{{ SCRIPT }}}
+</body>
+
+</html>
