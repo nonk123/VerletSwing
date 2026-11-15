@@ -21,7 +21,7 @@ static void on_arrived() {
 }
 
 static void on_disconnected() {
-    goto_screen(SCR_TAP_TO_JOIN);
+    goto_screen(SCR_JOINING);
 }
 
 static void init_scr_join() {
@@ -37,11 +37,9 @@ static void update_scr_join() {
 
     if (NutBlast_IsConnecting()) {
         s = "Joining...";
-    } else if (tap) {
+    } else {
         NutBlast_SetLobbyField("seed", fmt("%u", SDL_rand_bits()));
         NutBlast_IDGAF((NutBlast_HostOptions){.max_players = 4});
-    } else {
-        s = "Tap to join a lobby";
     }
 
     if (s)
@@ -63,7 +61,7 @@ static void update_scr_play() {
     if (NutBlast_IsOnline())
         update_game();
     else
-        goto_screen(SCR_TAP_TO_JOIN);
+        goto_screen(SCR_JOINING);
 }
 
 static void deinit_scr_play() {
@@ -76,7 +74,7 @@ static void deinit_scr_play() {
 
 static Screen table[SCR_MAX] = {
     [SCR_NONE] = {},
-    [SCR_TAP_TO_JOIN] = {.init = init_scr_join, .update = update_scr_join},
+    [SCR_JOINING] = {.init = init_scr_join, .update = update_scr_join},
     [SCR_PLAY] = {.init = init_scr_play, .update = update_scr_play, .deinit = deinit_scr_play},
 };
 
