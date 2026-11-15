@@ -32,7 +32,7 @@ SDL_Renderer* renderer = NULL;
 
 bool left_press = false, right_press = false, tap = false;
 
-static SDL_AppResult SDL_Fail() {
+static SDL_AppResult SDL_Fail(void) {
     SDL_LogError(SDL_LOG_CATEGORY_CUSTOM, "%s", SDL_GetError());
     return SDL_APP_FAILURE;
 }
@@ -156,7 +156,7 @@ SDL_AppResult SDL_AppEvent(void* ctx, SDL_Event* event) {
 static uint64_t then = 0;
 static double dt = 0.0;
 
-double delta() {
+double delta(void) {
     return dt;
 }
 
@@ -196,13 +196,13 @@ void SDL_AppQuit(void* ctx, SDL_AppResult result) {
     NutBlast_Cleanup();
 }
 
-int w_width() {
+int w_width(void) {
     int w = 0;
     SDL_GetWindowSizeInPixels(window, &w, NULL);
     return w;
 }
 
-int w_height() {
+int w_height(void) {
     int h = 0;
     SDL_GetWindowSizeInPixels(window, NULL, &h);
     return h;

@@ -8,15 +8,15 @@
 
 static ScreenIndex cur_screen = SCR_NONE;
 
-double timestep() {
+double timestep(void) {
     return cur_screen == SCR_PLAY ? 1.0 / TICKRATE : 0.0;
 }
 
 typedef struct {
-    void (*init)(), (*update)(), (*deinit)();
+    void (*init)(void), (*update)(void), (*deinit)(void);
 } Screen;
 
-static void on_arrived() {
+static void on_arrived(void) {
     goto_screen(SCR_PLAY);
 }
 
@@ -25,12 +25,12 @@ static void on_disconnected(NutBlast_Reason reason) {
     goto_screen(SCR_JOINING);
 }
 
-static void init_scr_join() {
+static void init_scr_join(void) {
     NutBlast_OnArrived(on_arrived);
     NutBlast_OnDisconnected(on_disconnected);
 }
 
-static void update_scr_join() {
+static void update_scr_join(void) {
     clear_screen(BACKGROUND_BASE);
 
     const double fs = 48.0;
@@ -47,7 +47,7 @@ static void update_scr_join() {
         draw_text(XY(0.5 * (w_width() - text_width(fs, s)), 0.5 * (w_height() - fs)), fs, s);
 }
 
-static void init_scr_play() {
+static void init_scr_play(void) {
     restart();
     clear_chat();
 
@@ -58,18 +58,18 @@ static void init_scr_play() {
     NutBlast_OnPlayerLeft(on_player_left);
 }
 
-static void update_scr_play() {
+static void update_scr_play(void) {
     if (NutBlast_IsOnline())
         update_game();
     else
         goto_screen(SCR_JOINING);
 }
 
-static void deinit_scr_play() {
+static void deinit_scr_play(void) {
     NutBlast_OnPlayerJoined(NULL);
     NutBlast_OnPlayerLeft(NULL);
 
-    extern void deinit_game();
+    extern void deinit_game(void);
     deinit_game();
 }
 
@@ -93,7 +93,7 @@ void goto_screen(ScreenIndex idx) {
     }
 }
 
-void update_screen() {
+void update_screen(void) {
     if (cur_screen != SCR_NONE && table[cur_screen].update)
         table[cur_screen].update();
 

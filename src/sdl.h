@@ -4,5 +4,5 @@
 #include <SDL3/SDL_storage.h>
 
 extern bool left_press, right_press, tap;
-int w_width(), w_height();
-double delta();
+int w_width(void), w_height(void);
+double delta(void);

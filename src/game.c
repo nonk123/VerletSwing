@@ -87,11 +87,11 @@ static void place_anchor(const double x, const double y) {
     anchors = TinyDPush(anchors, &(Anchor){x, y, scored});
 }
 
-static Monke* our_monke() {
+static Monke* our_monke(void) {
     return (Monke*)TinyMapGet(&monkes, NutBlast_GetPlayerID());
 }
 
-static void cull_anchors() {
+static void cull_anchors(void) {
     const Monke* monke = our_monke();
 
     if (!monke)
@@ -109,7 +109,7 @@ static void cull_anchors() {
     }
 }
 
-static void generate_anchors() {
+static void generate_anchors(void) {
     const Monke* monke = our_monke();
 
     if (!monke)
@@ -147,7 +147,7 @@ static void generate_anchors() {
     }
 }
 
-static void sync_camera_with_monke() {
+static void sync_camera_with_monke(void) {
     const Monke* monke = our_monke();
 
     if (monke)
@@ -180,13 +180,13 @@ void on_player_left(NutBlast_PlayerID id, NutBlast_Reason r) {
     TinyMapErase(&monkes, id);
 }
 
-void deinit_game() {
+void deinit_game(void) {
     FreeTinyMap(&monkes);
     NutBlast_OnPlayerJoined(NULL);
     NutBlast_OnPlayerLeft(NULL);
 }
 
-void restart() {
+void restart(void) {
     score = 0;
     last_scored_idx = -1;
 
@@ -199,7 +199,7 @@ void restart() {
     sync_camera_with_monke();
 }
 
-static void score_anchors() {
+static void score_anchors(void) {
     const Monke* monke = our_monke();
 
     if (!monke)
@@ -216,7 +216,7 @@ static void score_anchors() {
     }
 }
 
-static int closest_anchor() {
+static int closest_anchor(void) {
     if (!TinyDLength(anchors))
         return -1;
 
@@ -228,7 +228,7 @@ static int closest_anchor() {
     int closest = 0;
     const double ahead = 2.0 * monke->body.pos.x - monke->body.old_pos.x;
 
-    for (int i = 1; i < TinyDLength(anchors); i++)
+    for (int i = 1; i < (int)TinyDLength(anchors); i++)
         if (SDL_fabs(ahead - anchors[i].pos.x) <= SDL_fabs(ahead - anchors[closest].pos.x))
             closest = i;
 
@@ -237,7 +237,7 @@ static int closest_anchor() {
 
     closest = 0;
 
-    for (int i = 1; i < TinyDLength(anchors); i++)
+    for (int i = 1; i < (int)TinyDLength(anchors); i++)
         if (Vdist(monke->body.pos, anchors[i].pos) <= Vdist(monke->body.pos, anchors[closest].pos))
             closest = i;
 
@@ -247,7 +247,7 @@ static int closest_anchor() {
     return -1;
 }
 
-static void maybe_manifest_rope() {
+static void maybe_manifest_rope(void) {
     Monke* monke = our_monke();
 
     if (!left_press)
@@ -289,7 +289,7 @@ static void constrain_rope(Monke* monke) {
         VerletBody* const a = i ? &monke->rope.segs[i - 1] : &monke->body;
         VerletBody* const b = &monke->rope.segs[i];
 
-        if (i == TinyDLength(monke->rope.segs) - 1)
+        if (i == (int)TinyDLength(monke->rope.segs) - 1)
             b->pos = monke->rope.end; // !! IMPORTANT
         // rope doesn't rope ^ without this
 
@@ -318,7 +318,7 @@ static void draw_rope(Rope rope) {
         fill_square(rope.segs[i].pos, 3.0, RGB(255, 255, 255));
 }
 
-static void draw_game() {
+static void draw_game(void) {
     clear_screen(lerp_color(BACKGROUND_BASE, BACKGROUND_DEAD, 1.0 - death_timer / DEATH_SECS));
 
     sync_camera_with_monke();
@@ -334,7 +334,7 @@ static void draw_game() {
 
     const int closest = closest_anchor();
 
-    for (int i = 0; i < TinyDLength(anchors); i++) {
+    for (int i = 0; i < (int)TinyDLength(anchors); i++) {
         const SDL_Color col = i == closest ? RGB(255, 255, 0) : RGB(127, 127, 0);
         fill_square(anchors[i].pos, 16.0, col);
     }
@@ -366,7 +366,7 @@ static void draw_game() {
     draw_text(XY(0.5 * (w_width() - text_width(fs, s)), w_height() - fs - pad), fs, s);
 }
 
-static void pull_updates() {
+static void pull_updates(void) {
     NutBlast_Message msg = {0};
 
     while (NutBlast_NextMessage(CHAN_POS, &msg)) {
@@ -406,7 +406,7 @@ static void pull_updates() {
     }
 }
 
-static void run_updates() {
+static void run_updates(void) {
     TINY_MAP_FOREACH(&monkes, it) {
         Monke* monke = it.data;
         const NutBlast_PlayerID id = it.bucket->hash;
@@ -442,14 +442,14 @@ static void run_updates() {
     }
 }
 
-static void tick() {
+static void tick(void) {
     generate_anchors();
     score_anchors();
     maybe_manifest_rope();
     run_updates();
 }
 
-static void push_updates() {
+static void push_updates(void) {
     const Monke* monke = our_monke();
 
     if (!monke)
@@ -475,7 +475,7 @@ static void push_updates() {
     });
 }
 
-void update_game() {
+void update_game(void) {
     pull_updates();
 
     static double ticks = 0.0;

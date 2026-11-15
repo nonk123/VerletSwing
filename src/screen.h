@@ -10,7 +10,7 @@ enum {
     SCR_MAX,
 };
 
-double timestep();
+double timestep(void);
 
 void goto_screen(ScreenIndex idx);
-void update_screen();
+void update_screen(void);

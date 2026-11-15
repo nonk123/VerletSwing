@@ -4,3 +4,5 @@ Completion:
   HeaderInsertion: Never
 Diagnostics:
   Suppress: [c23-extensions]
+CompileFlags:
+  Add: [-Wextra, -Wcast-function-type, -Wstrict-prototypes]

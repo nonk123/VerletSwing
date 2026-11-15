@@ -11,7 +11,7 @@ static char LINES[8][256] = {0};
 
 static double pop_timer = POP_INTERVAL;
 
-void clear_chat() {
+void clear_chat(void) {
     for (size_t i = 0; i < SDL_arraysize(LINES); i++)
         SDL_memset(LINES[i], 0, sizeof(LINES[i]));
 }
@@ -20,7 +20,7 @@ static void set_line(size_t i, const char* s) {
     SDL_strlcpy(LINES[i], s, sizeof(LINES[i]));
 }
 
-static void pop_front() {
+static void pop_front(void) {
     for (size_t i = 0; i < SDL_arraysize(LINES) - 1; i++)
         set_line(i, LINES[i + 1]);
     SDL_memset(LINES[SDL_arraysize(LINES) - 1], 0, sizeof(LINES[0]));
@@ -49,7 +49,7 @@ void display_announcement(const char* s) {
     push_line(fmt("> %s", s));
 }
 
-void update_chat() {
+void update_chat(void) {
     NutBlast_Message msg = {0};
 
     while (NutBlast_NextMessage(CHAN_CHAT, &msg))

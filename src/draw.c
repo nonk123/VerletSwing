@@ -18,7 +18,7 @@
 
 static Vec2 cam_offset = XY(0.0, 0.0), cam_target = XY(0.0, 0.0);
 
-Vec2 camera_pos() {
+Vec2 camera_pos(void) {
     return cam_offset;
 }
 
@@ -26,7 +26,7 @@ void set_camera_target(Vec2 value) {
     cam_target = value;
 }
 
-void update_camera() {
+void update_camera(void) {
     const Vec2 dir = Vnorm(Vsub(cam_target, cam_offset));
     const double dist = Vlen(Vsub(cam_target, cam_offset)), delayed = CAM_SPEED * CAM_MAX_DELAY;
     const double vel = dist > delayed ? dist - delayed : SDL_min(CAM_SPEED * delta(), dist);
