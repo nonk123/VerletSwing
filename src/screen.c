@@ -20,7 +20,8 @@ static void on_arrived() {
     goto_screen(SCR_PLAY);
 }
 
-static void on_disconnected() {
+static void on_disconnected(NutBlast_Reason reason) {
+    (void)reason;
     goto_screen(SCR_JOINING);
 }
 
