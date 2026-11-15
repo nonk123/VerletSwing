@@ -4,7 +4,7 @@ project(VerletSwing
     VERSION 0.1.0
     DESCRIPTION "Verlet Swing"
     LANGUAGES C CXX)
-set(PROJECT_BUNDLE "dev.nonk.games.verlet") # not a standard variable but whatever
+set(PROJECT_BUNDLE "dev.nonk.games.verlet") # referenced in cmake.h.in; not a standard variable
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -61,9 +61,16 @@ endif()
 file(GLOB_RECURSE SOURCES ${CMAKE_SOURCE_DIR}/src/*.c)
 file(GLOB_RECURSE HEADERS ${CMAKE_SOURCE_DIR}/src/*.h)
 
-set(CONFIGURE_FILE ${CMAKE_BINARY_DIR}/generated/cmake.h)
-configure_file(${CMAKE_SOURCE_DIR}/src/cmake.h.in ${CONFIGURE_FILE} @ONLY)
-list(APPEND HEADERS ${CONFIGURE_FILE})
+configure_file(
+    ${CMAKE_SOURCE_DIR}/src/cmake.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/configured/cmake.h
+    @ONLY)
+
+file(GENERATE
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/generated/cmake.h"
+    INPUT ${CMAKE_CURRENT_BINARY_DIR}/configured/cmake.h)
+
+list(APPEND HEADERS "${CMAKE_CURRENT_BINARY_DIR}/generated/cmake.h")
 
 add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS})
 target_include_directories(${PROJECT_NAME}

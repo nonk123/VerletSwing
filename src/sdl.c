@@ -41,7 +41,7 @@ SDL_AppResult SDL_AppInit(void** ctx, int argc, char* argv[]) {
     (void)ctx, (void)argc, (void)argv;
 
     NutBlast_Init((NutBlast_InitOptions){
-        .game_id = GAME_TITLE " " GAME_VERSION,
+        .game_id = GAME_DEBUG " " GAME_CODENAME " " GAME_VERSION,
         .max_channels = CHAN_MAX,
     });
 
