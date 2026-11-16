@@ -5,4 +5,4 @@
 #define TICKRATE (60)
 
 extern uint64_t score;
-void restart(), update_game();
+void restart(void), update_game(void);

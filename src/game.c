@@ -13,10 +13,14 @@
 #include "stringbuf.h"
 #include "verlet.h"
 
+#define GAME_HEIGHT (800.0)
+#define ANCHOR_HEIGHT_VARIANCE (528.0)
+
+#define DEATH_THRESHOLD (128.0)
+#define STRATOSPHERE_THRESHOLD (8.0)
+
 #define SLIVER (4.0)
 #define MAX_HOOK_DISTANCE (360.0)
-
-#define STRAT_THRESHOLD (8.0)
 
 #define ANCHOR_STEP (120.0)
 #define ANCHOR_PROB (0.2)
@@ -67,7 +71,7 @@ static void nuke_rope(Rope* this) {
 }
 
 static void init_monke(Monke* this) {
-    Vec2 pos = Vscale(XY(0.0, -STRAT_THRESHOLD), 0.5);
+    Vec2 pos = Vscale(XY(0.0, -STRATOSPHERE_THRESHOLD), 0.5);
     init_verlet(&this->body, pos);
     nuke_rope(&this->rope);
 
@@ -115,12 +119,12 @@ static void generate_anchors(void) {
     if (!monke)
         return;
 
-    const double pad = 16.0, range = 528.0;
+    const double pad = 16.0;
 
     if (TinyDLength(anchors))
         cull_anchors();
     else
-        place_anchor(FIRST_ANCHOR_X, pad + 0.5 * range);
+        place_anchor(FIRST_ANCHOR_X, pad + 0.5 * ANCHOR_HEIGHT_VARIANCE);
 
     uint32_t seed = 0;
     SDL_sscanf(NutBlast_GetLobbyField("seed"), "%u", &seed);
@@ -132,9 +136,8 @@ static void generate_anchors(void) {
     size_t skips = 0;
 
     for (double x = FIRST_ANCHOR_X; x < end; x += ANCHOR_STEP) {
-        // NOTE: making sure we run both `SDL_randf`s in the same iteration for the LCG to produce a deterministic
-        // result.
-        const double y = pad + SDL_randf() * range;
+        // making sure we run both `SDL_randf`s in the same iteration for the LCG to produce a deterministic result
+        const double y = pad + SDL_randf() * ANCHOR_HEIGHT_VARIANCE;
         const double prob = SDL_randf();
 
         if (prob < ANCHOR_PROB || skips >= MAX_CONSECUTIVE_SKIPS) {
@@ -356,7 +359,7 @@ static void draw_game(void) {
 
         draw_texture("birb.png", monke->body.pos, XY(1.0, 1.0), direction, player_color);
 
-        if (is_us && monke->body.pos.y < -STRAT_THRESHOLD) {
+        if (is_us && monke->body.pos.y < -STRATOSPHERE_THRESHOLD) {
             s = fmt("%d", (int)-monke->body.pos.y);
             draw_text(XY(monke->body.pos.x - camera_pos().x - 0.5 * text_width(fs, s), pad), fs, s);
         }
@@ -429,7 +432,7 @@ static void run_updates(void) {
         verlet_rope(monke);
 
         if (is_us) {
-            if (monke->body.pos.y > w_height())
+            if (monke->body.pos.y > GAME_HEIGHT + DEATH_THRESHOLD)
                 tick_timer(&death_timer);
             else
                 death_timer = DEATH_SECS;

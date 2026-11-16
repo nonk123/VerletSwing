@@ -67,6 +67,6 @@ void update_chat(void) {
 
     const double fs = 32.0, pad = 8.0;
 
-    for (int i = 0; i < SDL_arraysize(LINES); i++)
+    for (int i = 0; i < (int)SDL_arraysize(LINES); i++)
         draw_text(XY(pad, w_height() - SDL_arraysize(LINES) * fs + i * fs - pad), fs, LINES[i]);
 }
