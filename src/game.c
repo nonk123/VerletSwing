@@ -343,18 +343,18 @@ static void draw_game(void) {
         Monke* monke = it.data;
         const bool is_us = it.bucket->hash == NutBlast_GetPlayerID();
 
-        SDL_Color player_color = is_us ? RGB(255, 0, 0) : RGB(127, 64, 0);
+        SDL_Color player_color = is_us ? RGB(255, 255, 255) : RGB(224, 224, 224);
+        const Vec2 vel = Vsub(monke->body.pos, monke->body.old_pos);
+        const double direction = SDL_atan2(vel.y, vel.x);
 
         if (is_us) {
-            const Vec2 vel = Vsub(monke->body.pos, monke->body.old_pos);
             const Vec2 scale = XY(1.0 - monke->dash_cooldown / DASH_COOLDOWN, 1.0);
-
             player_color.a = (uint8_t)lerpin3(0.0, 255.0, 1.0 - monke->dash_cooldown / DASH_COOLDOWN);
-            draw_texture("velvec.png", monke->body.pos, scale, SDL_atan2(vel.y, vel.x), player_color);
+            draw_texture("velvec.png", monke->body.pos, scale, direction, player_color);
             player_color.a = 255;
         }
 
-        fill_square(monke->body.pos, 16.0, player_color);
+        draw_texture("birb.png", monke->body.pos, XY(1.0, 1.0), direction, player_color);
 
         if (is_us && monke->body.pos.y < -STRAT_THRESHOLD) {
             s = fmt("%d", (int)-monke->body.pos.y);

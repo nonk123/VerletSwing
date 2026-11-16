@@ -8,12 +8,12 @@
 
 #define WHITE RGB(255, 255, 255)
 
-#define BACKGROUND_BASE RGB(0, 0, 0)
+#define BACKGROUND_BASE RGB(135, 206, 235)
 #define BACKGROUND_DEAD RGB(127, 15, 15)
 
-Vec2 camera_pos();
+Vec2 camera_pos(void);
 void set_camera_target(Vec2);
-void update_camera();
+void update_camera(void);
 
 void clear_screen(SDL_Color);
 void fill_square(Vec2, double, SDL_Color);

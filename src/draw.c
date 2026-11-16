@@ -64,11 +64,7 @@ void draw_texture(const char* name, Vec2 pos, Vec2 scale, double angle, SDL_Colo
 
     SDL_SetTextureColorMod(tex, tint.r, tint.g, tint.b);
     SDL_SetTextureAlphaMod(tex, tint.a);
-
     SDL_RenderTextureRotated(renderer, tex, NULL, &dst, angle * 180.0 / SDL_PI_D, NULL, SDL_FLIP_NONE);
-
-    SDL_SetTextureColorMod(tex, 255, 255, 255);
-    SDL_SetTextureAlphaMod(tex, 255);
 }
 
 static const uint8_t fontmap[GLYPH_COUNT]
@@ -86,6 +82,9 @@ double text_width(double fs, const char* text) {
 void draw_text(Vec2 pos, double fs, const char* text) {
     uint32_t c = 0;
     SDL_Texture* tex = gettex("monogram-bitmap.png");
+
+    SDL_SetTextureColorMod(tex, 0, 0, 0);
+    SDL_SetTextureAlphaMod(tex, 255);
 
     while ((c = SDL_StepUTF8(&text, NULL))) {
         if (c < 32 || c >= GLYPH_COUNT)
@@ -110,9 +109,6 @@ void draw_text(Vec2 pos, double fs, const char* text) {
             .w = (float)text_width(fs, " "),
             .h = (float)fs,
         };
-
-        SDL_SetTextureColorMod(tex, 255, 255, 255);
-        SDL_SetTextureAlphaMod(tex, 255);
 
         SDL_RenderTexture(renderer, tex, &src, &dst);
 
