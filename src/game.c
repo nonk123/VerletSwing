@@ -13,7 +13,7 @@
 #include "stringbuf.h"
 #include "verlet.h"
 
-#define GAME_HEIGHT (800.0)
+#define GAME_HEIGHT (600.0)
 #define ANCHOR_HEIGHT_VARIANCE (528.0)
 
 #define DEATH_THRESHOLD (128.0)
@@ -22,9 +22,9 @@
 #define SLIVER (4.0)
 #define MAX_HOOK_DISTANCE (360.0)
 
-#define ANCHOR_STEP (120.0)
+#define ANCHOR_STEP (220.0)
 #define ANCHOR_PROB (0.2)
-#define MAX_CONSECUTIVE_SKIPS (4)
+#define MAX_CONSECUTIVE_SKIPS (2)
 
 #define CULL_RADIUS (2.0 * w_width())
 #define FIRST_ANCHOR_X (240.0)
@@ -133,7 +133,7 @@ static void generate_anchors(void) {
     const double center = monke->body.pos.x;
     const double start = center - 0.98 * CULL_RADIUS;
     const double end = center + 0.98 * CULL_RADIUS;
-    size_t skips = 0;
+    int skips = 0;
 
     for (double x = FIRST_ANCHOR_X; x < end; x += ANCHOR_STEP) {
         // making sure we run both `SDL_randf`s in the same iteration for the LCG to produce a deterministic result
