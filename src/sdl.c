@@ -53,11 +53,13 @@ SDL_AppResult SDL_AppInit(void** ctx, int argc, char* argv[]) {
 
 #ifdef SDL_PLATFORM_EMSCRIPTEN
     const int w = 0, h = 0;
+    const SDL_WindowFlags flags = SDL_WINDOW_RESIZABLE;
 #else
     const int w = 800, h = 600;
+    const SDL_WindowFlags flags = 0;
 #endif
 
-    if (!SDL_CreateWindowAndRenderer(GAME_TITLE, w, h, 0, &window, &renderer))
+    if (!SDL_CreateWindowAndRenderer(GAME_TITLE, w, h, flags, &window, &renderer))
         return SDL_Fail();
 
     const char* name = fmt("%04d", SDL_rand(10000));
