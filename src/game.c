@@ -338,8 +338,8 @@ static void draw_game(void) {
     const int closest = closest_anchor();
 
     for (int i = 0; i < (int)TinyDLength(anchors); i++) {
-        const SDL_Color col = i == closest ? RGB(255, 255, 0) : RGB(127, 127, 0);
-        fill_square(anchors[i].pos, 16.0, col);
+        const SDL_Color col = i == closest ? RGB(255, 255, 255) : RGB(127, 127, 127);
+        draw_texture("anchor.png", anchors[i].pos, XY(2.0, 2.0), 0.0, col);
     }
 
     TINY_MAP_FOREACH(&monkes, it) {
@@ -357,7 +357,7 @@ static void draw_game(void) {
             player_color.a = 255;
         }
 
-        draw_texture("birb.png", monke->body.pos, XY(1.0, 1.0), direction, player_color);
+        draw_texture("birb.png", monke->body.pos, XY(2.0, 2.0), direction, player_color);
 
         if (is_us && monke->body.pos.y < -STRATOSPHERE_THRESHOLD) {
             s = fmt("%d", (int)-monke->body.pos.y);
