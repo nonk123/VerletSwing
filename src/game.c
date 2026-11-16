@@ -14,7 +14,7 @@
 #include "verlet.h"
 
 #define GAME_HEIGHT (600.0)
-#define ANCHOR_HEIGHT_VARIANCE (528.0)
+#define ANCHOR_HEIGHT_VARIANCE (428.0)
 
 #define DEATH_THRESHOLD (128.0)
 #define STRATOSPHERE_THRESHOLD (8.0)
@@ -22,7 +22,7 @@
 #define SLIVER (4.0)
 #define MAX_HOOK_DISTANCE (360.0)
 
-#define ANCHOR_STEP (220.0)
+#define ANCHOR_STEP (200.0)
 #define ANCHOR_PROB (0.2)
 #define MAX_CONSECUTIVE_SKIPS (2)
 
@@ -119,7 +119,7 @@ static void generate_anchors(void) {
     if (!monke)
         return;
 
-    const double pad = 16.0;
+    const double pad = 32.0;
 
     if (TinyDLength(anchors))
         cull_anchors();
